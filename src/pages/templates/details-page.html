@@ -1,0 +1,72 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>{{pageTitle}}</ion-title>
+  </ion-navbar>
+</ion-header>
+<ion-content>
+  <ion-list no-border>
+      <ion-item-divider icon-right color="light" (click)="toggleList()">
+        Propriedades
+        <ion-icon name="arrow-dropright" *ngIf="!listed" item-right></ion-icon>
+        <ion-icon name="arrow-dropdown"  *ngIf="listed" item-right></ion-icon>
+      </ion-item-divider>
+      <span *ngIf="listed">
+        <ion-item-sliding *ngFor="let item of properties">
+          <ion-item *ngIf="item !== 'connected' && item !== 'enabled' && changed[item]">
+            <ion-label color="primary">{{item}}</ion-label>
+            <ion-input [(ngModel)]="values[item]"></ion-input>
+            <button ion-button clear item-right (click)="updateAttribute(item)"><ion-icon name="send"></ion-icon></button>
+          </ion-item>
+          <button ion-item (click)="toggleUpdateAttr(item)" *ngIf="item !== 'connected' && item !== 'enabled' && !changed[item]">
+            <ion-label>
+              {{values[item]}} <ion-note padding>{{item}}</ion-note>
+            </ion-label>
+            <ion-icon *ngIf="true" name="pricetag" item-left></ion-icon>
+            <ion-icon *ngIf="false" name="pricetags" item-left></ion-icon>
+          </button>
+          <ion-item *ngIf="item === 'connected' || item === 'enabled'">
+            <ion-label>{{values[item]}} <ion-note padding>{{item}}</ion-note></ion-label>
+            <ion-toggle [(ngModel)]="values[item]" (click)="updateAttribute(item)"></ion-toggle>
+            <ion-icon *ngIf="values[item]" name="checkmark-circle-outline" item-left></ion-icon>
+            <ion-icon *ngIf="!values[item]" name="radio-button-off" item-left></ion-icon>
+          </ion-item>
+          <ion-item-options side="left">
+            <button ion-button color="danger"  (click)="removeAttribute(item)">
+              <ion-icon name="remove-circle"></ion-icon>
+            </button>
+          </ion-item-options>
+        </ion-item-sliding>
+        <button ion-item color="primary" (click)="openModal()">
+          Incluir Atributo
+        </button>
+      </span>
+      <ion-item-divider icon-right color="light" (click)="addAssociation($event, item.relations.next)">
+        Associações
+        <ion-icon name="add-circle-outline" item-right ></ion-icon>
+      </ion-item-divider>
+      <ion-item-sliding *ngFor="let item of associations" #associationItem>
+        <button ion-item (click)="itemTapped($event, item)">
+          <ion-avatar item-left>
+            <img [src]="(item.data.next.icon)?item.data.next.icon:imgdef">
+          </ion-avatar>
+          <h2>{{item.data.next.name}}</h2>
+          <h3><em>{{item.data.next.type}}</em></h3>
+          <p>{{item.data.next.subtype}}</p>
+          <ion-icon name="chevron-right" item-right></ion-icon>
+        </button>
+        <ion-item-options side="right">
+          <button ion-button color="primary" (click)="editItem($event, associationItem)">
+            Editar
+          </button>
+          <button ion-button color="secondary"  (click)="enableItem($event, item.relations.next)">
+            Habilitar
+          </button>
+        </ion-item-options>
+        <ion-item-options side="left">
+          <button ion-button color="danger"  (click)="removeItem($event, item.relations.next)">
+            <ion-icon name="remove-circle"></ion-icon>
+          </button>
+        </ion-item-options>
+      </ion-item-sliding>
+  </ion-list>
+</ion-content>

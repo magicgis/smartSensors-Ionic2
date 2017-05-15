@@ -1,0 +1,135 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Canais Ativos</ion-title>
+    <ion-buttons end>
+     <button ion-button icon-only (click)="logout()">
+       <ion-icon name="log-out"></ion-icon>
+     </button>
+   </ion-buttons>
+  </ion-navbar>
+</ion-header>
+<ion-content class="cards-bg preview-cards">
+  <ion-card class="advanced-background" *ngFor="let item of asyncChannels$ | async">
+    <img [src]='item.data.configurations.image'>
+    <ion-fab right top>
+      <button ion-fab>
+        <ion-icon [name]="item.data.configurations.pin.icon" [color]="item.data.configurations.pin.color"></ion-icon>
+      </button>
+    </ion-fab>
+
+    <ion-item class="advanced-trans">
+      <p item-start>{{item.data.configurations.label}}</p>
+      <p item-end>---</p>
+      <button ion-button color="light" icon-left clear>
+        <ion-icon name="eye"></ion-icon> {{ouvintes[item.id]}}
+      </button>
+    </ion-item>
+
+    <p class="advanced-background-title advanced-background-title-large">
+      <ion-img ion-icon [src]='item.data.configurations.icon'></ion-img>
+      <span>78&deg;</span>
+    </p>
+
+    <ion-buttons class="advanced-cards" end>
+      <button ion-button icon-left clear color="light" item-end><ion-icon name="heart" color="danger"></ion-icon> {{item.data.likes}} likes</button>
+      <button ion-button icon-left clear color="light" item-end><ion-icon name="chatbubbles" color="primary"></ion-icon>  {{item.data.comments}} Comentários</button>
+    </ion-buttons>
+
+    <ion-tabs color="light" class="advanced-cards" no-navbar>
+      <ion-tab color="light" tabTitle="Tue" tabIcon="sunny"></ion-tab>
+      <ion-tab tabTitle="Wed" tabIcon="partly-sunny"></ion-tab>
+      <ion-tab tabTitle="Thr" tabIcon="cloudy"></ion-tab>
+    </ion-tabs>
+  </ion-card>
+
+</ion-content>
+<!--
+<ion-content>
+  <ion-content class="card-background-page">
+    <ion-card>
+      <img src="assets/images/background_downtown.jpg">
+      <div class="card-title">São Carlos</div>
+      <ion-buttons start class="card-subtitle">
+        <button ion-button color="light" icon-left clear>
+          <ion-icon name="eye"></ion-icon> 41 Ouvintes
+        </button>
+      </ion-buttons>
+      <ion-buttons end>
+        <button ion-button icon-left clear item-end><ion-icon name="heart" color="danger"></ion-icon> 53 likes</button>
+        <button ion-button icon-left clear item-end><ion-icon name="chatbubbles" color="primary"></ion-icon>  10 Comentários</button>
+      </ion-buttons>
+      <ion-fab right top>
+        <button ion-fab>
+          <ion-icon name="pin"></ion-icon>
+        </button>
+      </ion-fab>
+
+      <ion-item>
+        <ion-icon name="football" item-left large></ion-icon>
+        <h2>Museum of Football</h2>
+        <p>11 N. Way St, Madison, WI 53703</p>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="wine" item-left large ></ion-icon>
+        <h2>Institute of Fine Cocktails</h2>
+        <p>14 S. Hop Avenue, Madison, WI 53703</p>
+      </ion-item>
+
+      <ion-item>
+        <span item-left>18 min</span>
+        <span item-left>(2.6 mi)</span>
+        <button ion-button icon-left clear item-right>
+          <ion-icon name="navigate"></ion-icon>
+          Start
+        </button>
+      </ion-item>
+    </ion-card>
+
+    <ion-card>
+      <img src="assets/images/profile_header_nature.jpeg"/>
+      <div class="card-title">Madison</div>
+      <ion-buttons start class="card-subtitle">
+        <button ion-button color="light" icon-left clear>
+          <ion-icon name="eye"></ion-icon> 28 Ouvintes
+        </button>
+      </ion-buttons>
+      <ion-buttons end>
+        <button ion-button icon-left clear item-end><ion-icon name="heart" color="danger"></ion-icon> 53 likes</button>
+        <button ion-button icon-left clear item-end><ion-icon name="chatbubbles" color="primary"></ion-icon>  10 Comentários</button>
+      </ion-buttons>
+
+      <ion-fab right top>
+        <button ion-fab>
+          <ion-icon name="pin"></ion-icon>
+        </button>
+      </ion-fab>
+
+      <ion-item>
+        <ion-icon name="football" item-left large></ion-icon>
+        <h2>Museum of Football</h2>
+        <p>11 N. Way St, Madison, WI 53703</p>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="wine" item-left large ></ion-icon>
+        <h2>Institute of Fine Cocktails</h2>
+        <p>14 S. Hop Avenue, Madison, WI 53703</p>
+      </ion-item>
+
+      <ion-item>
+        <span item-left>18 min</span>
+        <span item-left>(2.6 mi)</span>
+        <button ion-button icon-left clear item-right>
+          <ion-icon name="navigate"></ion-icon>
+          Start
+        </button>
+      </ion-item>
+    </ion-card>
+  </ion-content>
+
+</ion-content>
+-->
