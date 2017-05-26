@@ -11,32 +11,74 @@
    </ion-buttons>
   </ion-navbar>
 </ion-header>
+
 <ion-content class="cards-bg preview-cards">
-  <ion-card class="advanced-background" *ngFor="let item of asyncChannels$ | async">
-    <img [src]='item.data.configurations.image'>
+<!--  <div id="raw">
+      <h5>{{pushTopic}}</h5>
+      <p>{{count}} total</p>
+      <pre>{{messages | async}}</pre>
+
+      <div *ngIf="mq.length" class="panel panel-default">
+          <div class="panel-heading">
+              <span>History:</span>
+          </div>
+          <div class="panel-body" class="debug-mq-panel">
+              <ol reversed>
+                  <li *ngFor="let m of mq | reverse "><pre>{{m}}</pre></li>
+              </ol>
+          </div>
+      </div>
+  </div>-->
+  <ion-fab right top>
+    <app-mq-status></app-mq-status>
+  </ion-fab>
+  <ion-card class="advanced-background" *ngFor="let item of channels; let i = index; trackBy: trackByFn" [attr.data-index]="i">
+    <img [src]='item.data.configurations?.image'>
     <ion-fab right top>
-      <button ion-fab>
-        <ion-icon [name]="item.data.configurations.pin.icon" [color]="item.data.configurations.pin.color"></ion-icon>
+      <button ion-fab mini>
+        <ion-icon [name]="item.data.configurations?.pin.icon" [color]="item.data.configurations?.pin.color"></ion-icon>
       </button>
     </ion-fab>
 
     <ion-item class="advanced-trans">
-      <p item-start>{{item.data.configurations.label}}</p>
-      <p item-end>---</p>
-      <button ion-button color="light" icon-left clear>
-        <ion-icon name="eye"></ion-icon> {{ouvintes[item.id]}}
-      </button>
+      <p item-start>{{item.data.configurations?.label}}</p>
+      <p item-end>{{item.data.configurations?.description}}</p>
+      <p item-end>
+        <button color="light" ion-button icon-left clear small>
+          <ion-icon name="eye"></ion-icon>
+          <div>{{item.relations.subscribedBy.length}}</div>
+        </button>
+      </p>
     </ion-item>
 
     <p class="advanced-background-title advanced-background-title-large">
-      <ion-img ion-icon [src]='item.data.configurations.icon'></ion-img>
-      <span>78&deg;</span>
+      <ion-icon name='thunderstorm'></ion-icon>
+      <!--<ion-img [src]="item.data.configurations?.icon"></ion-img>-->
+      <span>{{item.data.updatedValue}} {{item.data.configurations.unit}}</span>
     </p>
+    <ion-grid no-padding>
+      <ion-row>
+        <ion-col>
+          <button ion-button full icon-left clear small>
+            <ion-icon name="thumbs-up"></ion-icon>
+            <div> {{item.data.likes}} Likes</div>
+          </button>
+        </ion-col>
+        <ion-col >
+          <button ion-button full icon-left clear small color="dark">
+            <ion-icon name="text"></ion-icon>
+            <div>{{item.data.comments}} Comments</div>
+          </button>
+        </ion-col>
+        <ion-col center text-center >
+          <ion-note>
+            à {{changed(item.sync)}} minutos
+          </ion-note>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
 
-    <ion-buttons class="advanced-cards" end>
-      <button ion-button icon-left clear color="light" item-end><ion-icon name="heart" color="danger"></ion-icon> {{item.data.likes}} likes</button>
-      <button ion-button icon-left clear color="light" item-end><ion-icon name="chatbubbles" color="primary"></ion-icon>  {{item.data.comments}} Comentários</button>
-    </ion-buttons>
+
 
     <ion-tabs color="light" class="advanced-cards" no-navbar>
       <ion-tab color="light" tabTitle="Tue" tabIcon="sunny"></ion-tab>
@@ -44,8 +86,14 @@
       <ion-tab tabTitle="Thr" tabIcon="cloudy"></ion-tab>
     </ion-tabs>
   </ion-card>
-
 </ion-content>
+
+<!--<ion-footer>
+
+    <button (click)="addNotifications()" ion-button color="primary" full>Schedule</button>
+    <button (click)="cancelAll()" ion-button color="danger" full>Leave me alone!</button>
+
+</ion-footer>-->
 <!--
 <ion-content>
   <ion-content class="card-background-page">

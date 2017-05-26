@@ -50,7 +50,8 @@ export class TopicDesignerPage {
       this.values     = result[0].data;
       this.object     = result[0];
     });
-    this.dataService.getData(["association", "connected", "last" , this.selectedItem]).subscribe((objects: any[]) => {
+    this.dataService.getData(["relation", "connectedTo", this.selectedItem])
+                  .subscribe((objects: any[]) => {
       this.associations = objects;
     });
   }

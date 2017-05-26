@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { NavParams, ModalController, NavController, ViewController } from 'ionic-angular';
+import { ModalController,NavController, NavParams, Platform, ActionSheetController } from 'ionic-angular';
 import { Observable }        from 'rxjs/Observable';
 // Observable operators
 import 'rxjs/add/operator/catch';
 
 import { HubDetailsPage } from '../hub-details/hub-details';
+import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 import { ModalContentPage }  from '../hub/hubModal';
+import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
 
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
@@ -32,9 +34,14 @@ export class HubPage implements OnInit {
     create: "Criar Objeto"
   };
 
+   shouldAnimate: boolean = true;
+
   constructor(public user:User,
               public navCtrl: NavController,
               public navParams: NavParams,
+              public platform: Platform,
+              public actionsheetCtrl: ActionSheetController,
+              public modalCtrl: ModalController,
               public dataService:DataService) {
     // If we navigated to this page, we will have an item available as a nav param
     this.selectedItem = navParams.get('item');
@@ -58,18 +65,10 @@ export class HubPage implements OnInit {
   ngOnInit() { this.getObjects(); }
 
   getObjects() {
-    this.dataService.getData(["knowledge", "object", "sink" , this.userKey])
+    this.dataService.getData(["sink" , "ownedBy", this.userKey])
                      .subscribe(
                        data => this.objects = data,
                        error =>  this.errorMessage = <any>error);
-  }
-
-  addHub(item) {
-    if (!item) { return; }
-    this.dataService.createObject(item)
-                .subscribe(
-                  data  => this.objects.push(data),
-                  error =>  this.errorMessage = <any>error);
   }
 
   toggleList(){this.listed = !this.listed};
@@ -89,9 +88,32 @@ export class HubPage implements OnInit {
     };
     */
   }
-  startItem(event: any, itemIndex: number){
+  startItem(event: any, item: any){
+    var configurations = {
+      hostip: "",
+      hostport: "",
+      email: "",
+      sink: "",
+      serialport: "",
+    };
+    var body = {};
 
+    body["equipmentId"] = item._id;
+    body["action"] = 'start';
+    body["type"] = 'sink';
+    body["data"] ={
+      ip: configurations.hostip,
+      port: configurations.hostport,
+      email: configurations.email,
+      sink: configurations.sink,
+      serialport: configurations.serialport,
+      configurations: item.data.configurations
+    };
 
+    this.dataService.startEquipment(body)
+                     .subscribe(
+                       data => this.objects = data,
+                       error =>  this.errorMessage = <any>error);
     /*(
      socket.emit("startBoard", JSON.stringify({
      ip: vm.hostip,
@@ -139,8 +161,30 @@ export class HubPage implements OnInit {
     */
   }
 
-  removeItem(event: any, itemId){
-    this.dataService.removeData(itemId)
+  addItem() {
+    let modal = this.modalCtrl.create(ChooseItemModal);
+    modal.present();
+    modal.onWillDismiss((data: any) => {
+      if (data) {
+        this.navCtrl.push(CreateKnowledgePage, {
+            info: data,
+            item: "",
+            key: this.userKey
+        });
+        console.log('MODAL DATA', data);
+      }
+    });
+  }
+
+  updateItem(itemId: string) {
+    this.navCtrl.push(CreateKnowledgePage, {
+        item: itemId,
+        key: this.userKey
+    });
+  }
+
+  removeItem(event: any, itemId: string){
+    this.dataService.removeKnowledge(itemId)
   }
 
   itemTapped(event: any, itemId: string) {
@@ -148,5 +192,50 @@ export class HubPage implements OnInit {
         item: itemId,
         key: this.userKey
     });
+  }
+
+  openMenu() {
+    let actionSheet = this.actionsheetCtrl.create({
+      title: 'Hubs',
+      cssClass: 'action-sheets-basic-page',
+      buttons: [
+        {
+          text: 'Novo Hub',
+          icon: !this.platform.is('ios') ? 'arrow-dropright-circle' : null,
+          handler: () => {
+            let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', itemType: 'sink', title: 'Novo Hub'});
+            modal.present();
+            modal.onWillDismiss((data: any) => {
+              if (data) {
+                this.navCtrl.push(CreateKnowledgePage, {
+                    template: data.selectedItem,
+                    type: data.selectedType,
+                    item: "",
+                    key: this.userKey
+                });
+                console.log('MODAL DATA', data);
+              }
+            });
+          }
+        },
+        {
+          text: 'Remover items',
+          role: 'destructive',
+          icon: !this.platform.is('ios') ? 'trash' : null,
+          handler: () => {
+            console.log('Delete clicked');
+          }
+        },
+        {
+          text: 'Sair',
+          role: 'quit', // will always sort to be on the bottom
+          icon: !this.platform.is('ios') ? 'close' : null,
+          handler: () => {
+            console.log('Sair clicked');
+          }
+        }
+      ]
+    });
+    actionSheet.present();
   }
 }

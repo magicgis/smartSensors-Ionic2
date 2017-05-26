@@ -1,0 +1,39 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      {{pageTitle}}
+    </ion-title>
+    <ion-buttons end>
+     <button ion-button icon-only (click)="dismiss()">
+       <span ion-text color="primary" showWhen="ios">Cancel</span>
+       <ion-icon name="md-close" showWhen="android, windows"></ion-icon>
+       <ion-icon name="close" hideWhen="ios, android, windows"></ion-icon>
+     </button>
+   </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content class="home">
+  <ion-slides pager="false" parallax="true" [initialSlide]="firstSlide">
+    <ion-slide>
+      <ion-grid>
+        <ion-row wrap >
+          <ion-col *ngFor="let item of listEquipments; let idx = index;" class="page-1" (click)="itemSelected(idx)">
+                <div class="card-title">{{item.name}}</div>
+                <div class="card-subtitle">{{listType}}</div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-slide>
+
+    <ion-slide>
+      <ion-grid>
+        <ion-row wrap >
+          <ion-col *ngFor="let item of listEquipments; let idx = index;" class="page-2" (click)="itemSelected(idx)">
+                <div class="card-title">{{item.name}}</div>
+                <div class="card-subtitle">{{item.type}}</div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-slide>
+  </ion-slides>
+</ion-content>

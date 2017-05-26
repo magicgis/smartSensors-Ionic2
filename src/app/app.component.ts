@@ -1,8 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
-import { Nav, Platform } from 'ionic-angular';
+import { Events, AlertController, Nav, Platform } from 'ionic-angular';
 import { LoadingController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
+import { Push, PushObject, PushOptions } from "@ionic-native/push";
+//import { Storage } from '@ionic/storage';
 
 import { DataService } from '../providers/apiData.service';
 
@@ -14,7 +16,6 @@ import { AccessoryPage } from '../pages/accessory/accessory';
 import { SourcePage } from '../pages/source/source';
 import { HubPage } from '../pages/hub/hub';
 import { User, Auth } from '@ionic/cloud-angular';
-
 
 @Component({
   templateUrl: 'app.html'
@@ -30,11 +31,15 @@ export class MyApp {
   pages: Array<{title: string, component: any}>;
 
   constructor(public platform: Platform,
-              public statusBar: StatusBar,
-              public splashScreen: SplashScreen,
+          		private events: Events,
+          		//private storage: Storage,
+              private statusBar: StatusBar,
+          		private splashScreen: SplashScreen,
+              public push: Push,
               public dataService:DataService,
               public user:User,
               public auth:Auth,
+              public alertCtrl: AlertController,
               public loadingCtrl:LoadingController) {
     this.initializeApp();
 
@@ -54,17 +59,18 @@ export class MyApp {
     this.platform.ready().then(() => {
       this.statusBar.styleDefault();
       this.splashScreen.hide();
+      this.initPushNotification();
 
       if(this.auth.isAuthenticated()) {
         let loader = this.loadingCtrl.create({
           content: "Logging in..."
         });
         loader.present();
-        this.dataService.getStaticData(["knowledge", "data", "data.email", this.user.details.email], "key")
+        this.dataService.getStaticData(["data", "data.email", this.user.details.email], "owner")
               .then(value => {
-                this.userKey  = value[0].key, this.userID  = value[0]._id
+                this.userKey  = value[0].owner, this.userID  = value[0]._id
                 loader.dismissAll();
-                this.nav.setRoot(HomePage, {"key": this.userKey, "id": this.userID})
+                this.nav.setRoot(HomePage, {"key": this.userID, "id": this.userID})
               },error =>  this.errorMessage = <any>error);
       }else{
         this.nav.setRoot(LoginPage);
@@ -74,10 +80,67 @@ export class MyApp {
     });
   }
 
+  listenToLoginEvents() {
+		this.events.subscribe('user:login', () => {
+			// this.navCtrl.push(HomePage)
+			// this.navCtrl.setRoot(HomePage);
+		})
+
+		this.events.subscribe('user:logout', () => {
+			console.log('user:logout')
+		})
+	}
+
+  initPushNotification(){
+    if (!this.platform.is('cordova')) {
+      console.warn("Push notifications not initialized. Cordova is not available - Run in physical device");
+      return;
+    }
+
+    const options: PushOptions = {
+      android: {
+        senderID: "998257253122"
+      },
+      ios: {
+        alert: "true",
+        badge: false,
+        sound: "true"
+      },
+      windows: {}
+    };
+    const pushObject: PushObject = this.push.init(options);
+
+    pushObject.on('registration').subscribe((data: any) => {
+      console.log("device token -> " + data.registrationId);
+      //TODO - send device token to server
+    });
+
+    pushObject.on('notification').subscribe((data: any) => {
+      console.log('message', data.message);
+      //if user using app and push notification comes
+      if (data.additionalData.foreground) {
+        // if application open, show popup
+        let confirmAlert = this.alertCtrl.create({
+          title: 'New Notification',
+          message: data.message,
+          buttons: [{
+            text: 'Ignore',
+            role: 'cancel'
+          }]
+        });
+        confirmAlert.present();
+      } else {
+        console.log("Push notification clicked");
+      }
+    });
+
+    pushObject.on('error').subscribe(error => console.error('Error with Push plugin', error));
+  }
+
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    this.nav.push(page.component, {"key": this.userKey, "id": this.userID});
+    this.nav.push(page.component, {"key": this.userID, "id": this.userID});
   }
 
 }

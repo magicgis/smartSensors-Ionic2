@@ -103,4 +103,7 @@
         </array>
     </config-file>
     <plugin name="cordova-plugin-nativestorage" spec="~2.2.2" />
+    <plugin name="phonegap-plugin-push" spec="https://github.com/phonegap/phonegap-plugin-push">
+        <variable name="SENDER_ID" value="998257253122" />
+    </plugin>
 </widget>

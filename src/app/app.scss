@@ -57,3 +57,43 @@ em {
 .menu-open .ion-navicon:before {
   content: "\f2ca";
 }
+
+@-webkit-keyframes slidingAnimation {
+  0% {
+    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0,0,0);
+  }
+
+  50% {
+    transform: translate3d(-70px,0,0);
+    -webkit-transform: translate3d(-70px,0,0);
+  }
+
+  100% {
+    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0,0,0);
+  }
+}
+
+.itemSlidingAnimation {
+    -webkit-animation: slidingAnimation;
+    animation: slidingAnimation;
+    -webkit-animation-duration: 1000ms;
+    animation-duraton: 1000ms;
+}
+
+.action-sheets-basic-page {
+  .ion-md-share {
+    color: #ED4248;
+  }
+  .ion-md-arrow-dropright-circle {
+    color: #508AE4;
+  }
+  .ion-md-heart-outline {
+    color: #31D55F;
+  }
+  .action-sheet-cancel ion-icon,
+  .action-sheet-destructive ion-icon {
+    color: #757575;
+  }
+}

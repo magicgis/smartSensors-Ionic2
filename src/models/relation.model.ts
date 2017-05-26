@@ -1,17 +1,33 @@
+import {Validators, FormBuilder, FormGroup } from '@angular/forms';
 export class RelationModel {
-  public direction: string;
-  public abstraction: string;
-  public parent: string;
-  public next: string;
-  public previous: string
+  public id: string;
+  public sync: number;
+  public access: string;
+  public publish: boolean;
+  public view: boolean;
 
-  constructor(
-    input: any
-  ){
-    this.direction = input["direction"] || "";
-    this.abstraction = input["abstraction"] || "";
-    this.parent = input["parent"] || "";
-    this.next = input["next"] || "";
-    this.previous = input["previous"] || "";
+  private formGroup: FormGroup;
+
+  constructor(input?: any, fb?: FormBuilder){
+    if (!input) input = {};
+
+    this.id = input["id"] || "";
+    this.sync = input["sync"] || Date.now();
+    this.access = input["access"] || "public";
+    this.publish = input["publish"] || false;
+    this.view = input["view"] || false;
+
+    if (fb) this.formGroup = fb.group({
+                  sync: [this.sync],
+                  id: [this.id],
+                  view : [this.view],
+                  publish : [this.publish],
+                  access : [this.access]
+              });
   }
+
+  public getFormGroup() {
+    return this.formGroup;
+  }
+
 }

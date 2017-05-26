@@ -1,14 +1,18 @@
 import { Component } from '@angular/core';
 import { ModalController, NavController, NavParams } from 'ionic-angular';
-import { ModalContentPage }  from '../templates/attributeModal';
+import { ModalContentPage }  from '../modals/attribute-item';
 
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
 
 import { AccessoryDetailsPage } from '../accessory-details/accessory-details';
 import { SourceDetailsPage } from '../source-details/source-details';
+import { ProfilePage } from '../profile/profile';
+import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 
-
+import { DataInterface } from '../../models/data.interface';
+import { AttributeModel } from '../../models/attribute.model';
+import { KnowledgeModel } from '../../models/knowledge.model';
 
 @Component({
   selector: 'page-hub-details',
@@ -17,16 +21,20 @@ import { SourceDetailsPage } from '../source-details/source-details';
 export class HubDetailsPage {
   pageTitle: string;
   imgdef:string = "assets/icons/img/ionic.png";
-  listed: boolean = false;
+  listAttributes: boolean = false;
+  listConfigurations: boolean = false;
+  update: boolean = false;
 
   errorMessage: string;
   selectedItem: any;
   userKey: any;
 
-  values: any;
-  object: any;
-  properties: any;
-  associations: any;
+  object: KnowledgeModel;
+  configurations: Array<AttributeModel> = [];
+
+  data: DataInterface;
+  info: Array<AttributeModel> = [];
+  knowledges: Array<KnowledgeModel> = [];
   changed: boolean[];
 
   constantsWindows: Object = {
@@ -37,6 +45,8 @@ export class HubDetailsPage {
     create: "Criar Associação",
     update: "Salvar"
   };
+
+   shouldAnimate: boolean = true;
 
   constructor(public user:User,
               public navCtrl: NavController,
@@ -55,23 +65,26 @@ export class HubDetailsPage {
   }
 
   selectObject() {
-    this.dataService.getOne(["knowledge", this.selectedItem])
+    this.dataService.getOne([ this.selectedItem])
                      .subscribe(result => {
                        this.pageTitle  = result.data.name;
-                       this.properties = Object.keys(result.data);
-                       this.values     = result.data;
-                       this.object     = result;
+                       this.info = result.data.info;
+                       this.configurations = result.data.configurations;
+                       this.data = result.data;
+                       this.object = new KnowledgeModel(result);
                      },error =>  this.errorMessage = <any>error);
   }
 
   selectAssociations() {
-    this.dataService.getData(["association", "connected", "last" , this.selectedItem])
+    this.dataService.getData(["connectedTo", this.selectedItem])
                   .subscribe((objects: any[]) => {
-      this.associations = objects;
+      this.knowledges = objects;
     });
   }
 
-  toggleList(){this.listed = !this.listed};
+  transformDate(date){
+    return new Date(date).toLocaleString();
+  }
 
   propertyTapped(event, item) {
       /*this.navCtrl.push(HubDetailsPage, {
@@ -79,44 +92,55 @@ export class HubDetailsPage {
       });*/
   }
 
-  editItem(event: any, itemIndex: number){
+  updateItem() {
+    this.navCtrl.push(CreateKnowledgePage, {
+        item: this.selectedItem,
+        key: this.userKey
+    });
+  }
 
+  editItem(event: any, itemIndex: number){
   }
   enableItem(event: any, itemIndex: number){
-
   }
 
   removeItem(event: any, itemId){
-    this.dataService.removeData(itemId);
+    this.dataService.removeKnowledge(itemId);
   }
 
-  toggleUpdateAttr(item){
-    this.changed[item]=!this.changed[item];
+  toggleUpdateAttr(evt, ref, item){
+    if(evt.checked !== this.data[ref][item])
+      this.updateAttribute(["data", ref, item].join("."), this.data[ref][item]);
+      //this.changed[ref + item]=! this.changed[ref + item];
   }
 
-  openModal() {
+  addAssociation(){
+
+  }
+
+  openModal(type, ref) {
     let modal = this.modalCtrl.create(ModalContentPage);
     modal.present();
     modal.onWillDismiss((data: any) => {
       if (data) {
         console.log('MODAL DATA', data);
-        this.values[data.name] = data.attribute;
-        this.updateAttribute(data.name);
-        //this.excludeTracks = data;
-        //this.updateSchedule();
+        if (type==='add') {
+          var index = this.object.data[ref].push(data.item);
+          this.updateAttribute(["data", ref].join("."), index);
+        }
+        this.updateAttribute(["data", ref].join("."), this.object[ref][index]);
       }
     });
   }
 
 
-  updateAttribute(item){
-    let changes = {};
-    changes[item] = this.values[item];
-    this.dataService.updateAttribute(this.selectedItem, changes)
+  updateAttribute(ref, item){
+    //let changes = {};
+    //changes[ref + item] = this.values[ref + item];
+    this.dataService.updateAttribute(this.selectedItem, {ref: item})
           .subscribe((data: any) => {
             console.log(data['ok']);
           });
-    this.changed[item]=false;
   }
 
   removeAttribute(item){
@@ -129,12 +153,13 @@ export class HubDetailsPage {
 
   itemTapped(event, item) {
     var nextPage:any = null;
-    if (item["data"]["next"]["type"] === "sensor")
-        nextPage = SourceDetailsPage;
-    else nextPage = AccessoryDetailsPage;
+
+    if (item.type === "sensor") nextPage = SourceDetailsPage;
+    else if (item.type === "actuator") nextPage = AccessoryDetailsPage;
+    else nextPage = ProfilePage;
 
     this.navCtrl.push(nextPage, {
-        item: item["relations"]["next"],
+        item: item._id,
         key: this.userKey
     });
   }

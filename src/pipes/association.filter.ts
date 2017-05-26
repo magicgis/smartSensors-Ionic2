@@ -1,18 +1,18 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 //import {KnowledgeModel} from '../models/knowledge.model';
-import {BasicObjectModel} from '../models/basic-object.model';
+import {DataInterface} from '../models/objectData.model';
 
 @Pipe({
     name: 'associationfilter',
     pure: false
 })
 export class AssociationFilterPipe implements PipeTransform {
-    transform(items: any[], filter: BasicObjectModel): any {
+    transform(items: any[], filter: string): any {
         if (!items || !filter) {
             return items;
         }
         // filter items array, items which match and return true will be kept, false will be filtered out
-        return items.filter(item =>item.data.next.type.indexOf(filter.type) !== -1);
+        return items.filter(item =>item.type.indexOf(filter) !== -1);
     }
 }

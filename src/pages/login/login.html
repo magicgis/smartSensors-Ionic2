@@ -1,8 +1,3 @@
-<ion-header>
-  <ion-navbar>
-    <ion-title>{{pageTitle}}</ion-title>
-  </ion-navbar>
-</ion-header>
 <ion-content padding>
 
   <div>
@@ -60,9 +55,17 @@
       <button ion-button color="assertive" class="ink" *ngIf="!showLogin || showForgotten" full (click)="doGoBack()">Voltar</button>
   </div>
 
-  <ion-buttons class="social-login">
-    <button ion-button icon-left color="danger" class="button-border" (click)="doGoogleSignIn()"><ion-icon name="logo-google"></ion-icon> Google+</button>
-    <button ion-button icon-left color="light" class="button-border" (click)="doTwitterSignIn()"><ion-icon name="logo-twitter"></ion-icon> Twitter</button>
-    <button ion-button icon-left color="primary" class="button-border" (click)="doFbLogin()"><ion-icon name="logo-facebook"></ion-icon> Facebook</button>
-  </ion-buttons>
+
 </ion-content>
+
+<ion-footer>
+  <ion-toolbar position="bottom">
+    <ion-grid no-padding>
+      <ion-row>
+         <ion-col width-33><button ion-button clear full icon-left color="danger" (click)="doGoogleSignIn()"><ion-icon name="logo-google"></ion-icon> Google+</button></ion-col>
+         <ion-col width-33><button ion-button clear full icon-left color="dark" (click)="doTwitterSignIn()"><ion-icon name="logo-twitter"></ion-icon> Twitter</button></ion-col>
+         <ion-col width-33><button ion-button clear full icon-left color="primary" (click)="doFbLogin()"><ion-icon name="logo-facebook"></ion-icon> Facebook</button></ion-col>
+       </ion-row>
+     </ion-grid>
+  </ion-toolbar>
+</ion-footer>

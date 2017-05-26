@@ -2,12 +2,15 @@ import { Component } from '@angular/core';
 
 import { NavParams, ViewController } from 'ionic-angular';
 
+import { AttributeModel } from '../../models/attribute.model';
+
 @Component({
-  templateUrl: './attributeModal.html'
+  templateUrl: './attribute-item.html'
 })
 export class ModalContentPage {
-  name: string;
-  attribute: string;
+  item: AttributeModel;
+  index: string;
+  ref: string;
 
   constructor(
     params: NavParams,
@@ -16,11 +19,12 @@ export class ModalContentPage {
 
   doSave(){
     this.viewCtrl.dismiss({
-      name: this.name,
-      attribute: this.attribute
+      item: this.item,
+      index: this.index,
+      ref: this.ref
     });
   }
-  
+
   dismiss() {
     this.viewCtrl.dismiss();
   }

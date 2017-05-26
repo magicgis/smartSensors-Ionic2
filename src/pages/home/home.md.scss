@@ -10,3 +10,10 @@ ion-card .advanced-cards tabbar a span.tab-button-text {
   background-color: #fff !important;
   top: 0;
 }
+
+.debug-mq-panel {
+    overflow-y:scroll;
+    height:50vh;
+    margin-top: 2em;
+    margin-right: 2em;
+}

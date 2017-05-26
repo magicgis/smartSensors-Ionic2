@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Platform , NavController, NavParams} from 'ionic-angular';
+import { ModalController,NavController, NavParams, Platform, ActionSheetController } from 'ionic-angular';
 import { User } from '@ionic/cloud-angular';
 import { Observable }        from 'rxjs/Observable';
 // Observable operators
@@ -7,6 +7,8 @@ import 'rxjs/add/operator/catch';
 
 //import { AssociationFilterPipe } from '../pipes/association.filter'
 
+import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
+import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 import { AccessoryDetailsPage } from '../accessory-details/accessory-details';
 import { SourceDetailsPage } from '../source-details/source-details';
 import { HubDetailsPage } from '../hub-details/hub-details';
@@ -21,10 +23,10 @@ import {KnowledgeModel} from '../../models/knowledge.model';
 })
 export class EquipmentsPage  implements OnInit {
   errorMessage: string;
-  selectedItem: any;
-  equipments:  KnowledgeModel[];
+  selectedItem: string;
+  knowledges: Array<KnowledgeModel> = [];
 
-  filteredItems:  KnowledgeModel[];
+  filteredItems: Array<KnowledgeModel> = [];
   imgdef:string = "assets/icons/img/ionic.png";
 
   equipTitle: string = "equipamentos";
@@ -32,21 +34,22 @@ export class EquipmentsPage  implements OnInit {
   userKey: any;
 
   constructor(public user:User,
-              platform: Platform,
+              public platform: Platform,
               public navCtrl: NavController,
+              public actionsheetCtrl: ActionSheetController,
+              public modalCtrl: ModalController,
               navParams: NavParams,
               public dataService:DataService) {
     // If we navigated to this page, we will have an item available as a nav param
     this.isAndroid = platform.is('android');
     this.userKey = navParams.get('key');
     this.selectedItem = "sink";
-    this.equipments = [];
   }
 
   // Push a search term into the observable stream.
   getItems(selectedItem: string) {
-    this.filteredItems = this.equipments.filter((v) => {
-      if (v.subtype.toLowerCase().indexOf(this.selectedItem.toLowerCase()) > -1) return true;
+    this.filteredItems = this.knowledges.filter((v) => {
+      if (v.type.toLowerCase().indexOf(this.selectedItem.toLowerCase()) > -1) return true;
         return false;
     })
   }
@@ -60,7 +63,7 @@ export class EquipmentsPage  implements OnInit {
         .distinctUntilChanged()   // ignore if next search term is same as previous
         .switchMap(term => term   // switch to new observable each time the term changes
           // return the http search observable
-          ? this.dataService.getData(["knowledge", "association", "own" , this.userKey])
+          ? this.dataService.getData(["association", "own" , this.userKey])
           // or the observable of empty heroes if there was no search term
           : Observable.of<any[]>([]))
         .catch(error => {
@@ -68,9 +71,9 @@ export class EquipmentsPage  implements OnInit {
           console.log(error);
           return Observable.of<any[]>([]);
         });*/
-    this.dataService.getData(["knowledge", "type", "object" , this.userKey])
+    this.dataService.getData(["ownedBy", this.userKey])
                      .subscribe(
-                       data => this.equipments = data,
+                       data => this.knowledges = data,
                        error =>  this.errorMessage = <any>error);
   }
 
@@ -88,8 +91,32 @@ export class EquipmentsPage  implements OnInit {
     };
     */
   }
-  startItem(event: any, itemId){
+  startItem(event: any, item: any){
+    var configurations = {
+      hostip: "",
+      hostport: "",
+      email: "",
+      sink: "",
+      serialport: "",
+    };
+    var body = {};
 
+    body["equipmentId"] = item._id;
+    body["action"] = 'start';
+    body["type"] = this.selectedItem;
+    body["data"] ={
+      ip: configurations.hostip,
+      port: configurations.hostport,
+      email: configurations.email,
+      sink: configurations.sink,
+      serialport: configurations.serialport,
+      configurations: item.data.configurations
+    };
+
+    this.dataService.startEquipment(body)
+                     .subscribe(
+                       data => console.log(data),//this.objects = data,
+                       error =>  this.errorMessage = <any>error);
 
     /*(
      socket.emit("startBoard", JSON.stringify({
@@ -139,7 +166,7 @@ export class EquipmentsPage  implements OnInit {
   }
 
   removeItem(event: any, itemId){
-    this.dataService.removeData(itemId)
+    this.dataService.removeKnowledge(itemId)
   }
 
   editItem(event, item){
@@ -148,15 +175,61 @@ export class EquipmentsPage  implements OnInit {
 
   itemTapped(event, item) {
     var nextPage:any = null;
-    if (item.subtype === "sensor")
+    if (item.type === "sensor")
       nextPage = SourceDetailsPage;
-    else if (item.subtype === "actuator")
+    else if (item.type === "actuator")
       nextPage = AccessoryDetailsPage;
     else nextPage = HubDetailsPage;
 
     this.navCtrl.push(nextPage, {
-        item: item.id,
+        item: item._id,
         key: this.userKey
     });
   }
+
+  openMenu() {
+    let actionSheet = this.actionsheetCtrl.create({
+      title: 'Equipamentos',
+      cssClass: 'action-sheets-basic-page',
+      buttons: [
+        {
+          text: 'Novo Equipamento',
+          icon: !this.platform.is('ios') ? 'arrow-dropright-circle' : null,
+          handler: () => {
+            let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', title: 'Novo Equipamento'});
+            modal.present();
+            modal.onWillDismiss((data: any) => {
+              if (data) {
+                this.navCtrl.push(CreateKnowledgePage, {
+                    template: data.selectedItem,
+                    type: data.selectedType,
+                    item: "",
+                    key: this.userKey
+                });
+                console.log('MODAL DATA', data);
+              }
+            });
+          }
+        },
+        {
+          text: 'Remover items',
+          role: 'destructive',
+          icon: !this.platform.is('ios') ? 'trash' : null,
+          handler: () => {
+            console.log('Delete clicked');
+          }
+        },
+        {
+          text: 'Sair',
+          role: 'quit', // will always sort to be on the bottom
+          icon: !this.platform.is('ios') ? 'close' : null,
+          handler: () => {
+            console.log('Sair clicked');
+          }
+        }
+      ]
+    });
+    actionSheet.present();
+  }
+
 }
