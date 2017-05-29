@@ -60,10 +60,13 @@ export class DataService {
   }
 
   createKnowledge(newObject: any): Observable<KnowledgeModel> {
-    let transactionObj = new KnowledgeModel(newObject);
-    return this.http.put(this.dbUrl + "api/knowledge", transactionObj, this.generateHeader(true))
+    //let transactionObj = new KnowledgeModel(newObject);
+    //console.log(transactionObj);
+    return this.http.put(this.dbUrl + "api/knowledge", newObject, this.generateHeader(true))
           .map(this.extractData)
           .catch(this.handleError);
+
+
   }
 
   updateKnowledge(resource: string, newData: {}): Observable<KnowledgeModel> {

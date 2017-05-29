@@ -40,6 +40,10 @@ export class ProfileModel implements DataInterface{
 
   }
 
+  public fillData(data){
+
+  }
+
   public getFormGroup() {
     return this.formGroup;
   }

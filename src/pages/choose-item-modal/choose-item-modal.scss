@@ -67,6 +67,7 @@
         color: rgba(220, 220, 220,1);
       }
 
+
     }
     ion-col:active {
         background: #f1f1f1;
@@ -75,9 +76,29 @@
 	      opacity: 1;
     }
 
-
 }
+
+ion-item{
+  background:rgba(8, 134, 222,0.4);
+}
+
 
 ion-title{
   text-transform: capitalize;
+}
+
+.slide-zoom {
+  height: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+// space for swiper-pagination
+.swiper-wrapper {
+  height:95%;
+}
+
+
+.swiper-slide {
+  display: block;
 }

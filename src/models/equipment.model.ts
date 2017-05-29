@@ -22,37 +22,46 @@ export class EquipmentModel implements DataInterface{
   private formInfoArray: FormArray;
   private formConfigArray: FormArray;
 
-  constructor(input?: any, fb?: FormBuilder){
-    if (!input) input = {};
+  private fb: FormBuilder;
 
-    this.connected     = input["connected"] || false;
-    this.enabled      = input["enabled"] || false;
-    this.updatedValue = input["updatedValue"] || "";
-    this.sync = input["sync"] || Date.now();
-    this.unit         = input["unit"] || "%";
-    this.icon         = input["icon"] || "assets/icons/motion.svg";
-    this.image        = input["image"] || "assets/images/profile_header0.png";
-    this.label        = input["label"] || "Teste";
-    this.description  = input["description"] || "Descricao Teste";
-    this.name         = input["name"] || "Teste EEEE";
-    this.geo          = new AddressModel(input["geo"], fb);
+  constructor(input?: any, fb?: FormBuilder){
+    this.fb = fb;
+
     if (fb) {
       this.formInfoArray    = fb.array([]);
       this.formConfigArray  = fb.array([]);
     }
 
-    if (input["info"])
+    if (input.template) this.fillTemplate(input, fb);
+    else {
+      if ( ! input ) input = {};
+
+      this.connected    = input[ "connected" ] || false;
+      this.enabled      = input[ "enabled" ] || false;
+      this.updatedValue = input[ "updatedValue" ] || "";
+      this.sync         = input[ "sync" ] || Date.now ();
+      this.unit         = input[ "unit" ] || "%";
+      this.icon         = input[ "icon" ] || "assets/icons/motion.svg";
+      this.image        = input[ "image" ] || "assets/images/profile_header0.png";
+      this.label        = input[ "label" ] || "Teste";
+      this.description  = input[ "description" ] || "Descricao Teste";
+      this.name         = input[ "name" ] || "Teste EEEE";
+
+      if (input["info"])
         for(let itemInfo of input["info"]) {
           let attr = new AttributeModel(itemInfo, fb);
           this.info.push(attr)
           if (fb) this.formInfoArray.push(attr.getFormGroup());
         };
-    if (input["configurations"])
+      if (input["configurations"])
         for(let itemConf of input["configurations"]) {
           var attr = new AttributeModel(itemConf, fb);
           this.configurations.push(attr)
           if (fb) this.formConfigArray.push(attr.getFormGroup());
         };
+    }
+
+    this.geo          = new AddressModel ( input[ "geo" ], fb );
 
     if (fb) this.formGroup = fb.group({
         updatedValue: [this.updatedValue],
@@ -69,6 +78,30 @@ export class EquipmentModel implements DataInterface{
         configurations: this.formConfigArray,
         geo: this.geo.getFormGroup()
       });
+  }
+
+  public fillTemplate(input, fb){
+
+    this.connected    = false;
+    this.enabled      = false;
+    this.updatedValue = "";
+    this.sync         = Date.now ();
+    this.unit         = "%";
+    this.icon         = "assets/icons/motion.svg";
+    this.image        = "assets/images/profile_header0.png";
+    this.label        = "Teste";
+    this.description  = "Descricao Teste";
+
+    if (input.template.info)
+      for (let item of input.template.info)
+          this[item.name] = item.value;
+
+    if (input.template.properties)
+      for(let item of input.template.properties){
+          var attr = new AttributeModel(item, fb);
+          this.configurations.push(attr);
+          if (this.fb) this.formConfigArray.push(attr.getFormGroup());
+      };
   }
 
   public getFormGroup() {

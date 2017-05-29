@@ -13,8 +13,7 @@ export class ChooseItemModal {
   item: AttributeModel;
   index: string;
   ref: string;
-  selectedItems: Array<any>;
-  listEquipments: Array<any>;
+  listTemplates: Array<any>;
   listReferences: any;
 
   errorMessage: string;
@@ -22,70 +21,116 @@ export class ChooseItemModal {
   itemType: string;
   listType: string;
   itemSubType: string;
+
   pageTitle: string;
+  slideList: Array<any> = [];
+
   selectedItem: any;
   selectedType: string = "";
-  firstSlide: number = 0;
+  selectedName: string = "";
+  firstSlide: number;
 
   constructor(
     private navParams: NavParams,
     private dataService:DataService,
     private viewCtrl: ViewController
   ) {
+    this.firstSlide = 0;
     this.userKey = this.navParams.get('key');
     this.pageTitle = this.navParams.get('title');
     this.listType = this.navParams.get('listType');
     this.itemType = this.navParams.get('itemType');
-    if (this.itemType) this.firstSlide = 1;
     this.getReferenceData();
   }
 
-  ionViewDidEnter() {
+  ionSlideWillChange() {
     // Initialize the flag
-    this.slides.lockSwipeToPrev(true);
-    this.slides.lockSwipeToNext(true);
-
+    //this.slides.lockSwipes(true);
+    if ( this.slideList.length - this.slides.getActiveIndex() >= 2 )
+      this.slides.lockSwipeToNext(false);
+    else this.slides.lockSwipeToNext(true);
+    if ( this.slides.getActiveIndex() <= 2 )
+      this.slides.lockSwipeToPrev(true);
+    else  this.slides.lockSwipeToPrev(false);
   }
 
-  ionSlideDidChange(){
-    if (this.slides.getActiveIndex() === this.firstSlide) this.slides.lockSwipeToPrev(true);
-    else {
-      this.slides.lockSwipeToPrev(false);
-      this.slides.lockSwipeToNext(true);
+  itemSelected(itemIndex: number, slideIndex: number) {
+    //if (lastSlide) this.doSave(this.listTemplates[itemIndex], this.selectedType);
+    this.selectedItem = this.slideList[slideIndex][itemIndex];
+    if (this.selectedItem.options.length){
+      this.pageTitle = "Novo " + this.selectedItem.name;
+      this.selectedType = this.selectedItem.name;
+      this.slideList.push("");
+      this.slideList[slideIndex+1] = this.selectedItem.options;
+      this.slides.lockSwipeToNext(false);
+      this.slides.slideTo(slideIndex+1, 500, true);
+      this.firstSlide++;
+      //this.slides.slideNext(500, true);
+    }else if (this.selectedItem.properties.length){
+      this.slideList[slideIndex+1] = this.selectedItem.info[0];
+      for (let attr of this.selectedItem.properties)
+        if (!attr.hidden)
+          this.slideList.push(attr);
+
+      this.slides.lockSwipeToNext(false);
+      //this.slides.slideTo(slideIndex+1, 500, true);
+      this.slides.slideTo(slideIndex+1, 500, true);
     }
   }
 
-  itemSelected(itemIndex: number) {
-    if (!this.listEquipments[itemIndex].options.length) this.doSave(this.listEquipments[itemIndex], this.selectedType);
-    else{
-      this.pageTitle = this.listEquipments[itemIndex].name;
-      this.selectedType = this.listEquipments[itemIndex].name;
-      this.listEquipments = this.listEquipments[itemIndex].options;
-      this.slides.lockSwipeToNext(false); this.slides.slideNext(500, true);
-    }
+  goBack(){
+    this.slides.lockSwipeToPrev(false);
+    this.slides.slidePrev(500, true);
+  }
+  goNext(){
+    this.slides.lockSwipeToNext(false);
+    this.slides.slideNext(500, true);
   }
 
   slideChanged() {
     let currentIndex = this.slides.getActiveIndex();
     console.log("Current index is", currentIndex);
+
+    if (this.slides.getActiveIndex()<2) return;
+
+    if(this.slides.getActiveIndex()>= 2) {
+      this.pageTitle = this.slideList[this.slides.getActiveIndex()].display;
+    }
+  }
+
+  public rangeChange(valA: number, valB: number)
+  {
+    return {below: valA, top: valB};
+    //this.myForm.controls['formRange'].updateValue(this.val);
   }
 
   private getReferenceData() {
-    this.dataService.getReferenceData([[this.listType,"Types"].join(""), this.itemType])
+    this.dataService.getReferenceData(["all"])
+      .subscribe(
+        data => {
+          this.listReferences = data[0];
+          if (this.itemType) this.slideList.push(this.listReferences[[this.listType,"Types"].join("")][this.itemType]);
+          else this.slideList.push(this.listReferences[[this.listType,"Types"].join("")]);
+          this.firstSlide++;
+          this.slideList.push("");
+        },
+        error =>  this.errorMessage = <any>error);
+    /*this.dataService.getReferenceData([[this.listType,"Types"].join(""), this.itemType])
                      .subscribe(
                        data => {
                          this.listReferences = data[[this.listType,"Types"].join("")];
-                         if (this.itemType) this.listEquipments = this.listReferences[this.itemType];
-                         else this.listEquipments = this.listReferences;
+                         if (this.itemType) this.slideList.push(this.listReferences[this.itemType]);
+                         else this.slideList.push(this.listReferences);
+                         this.slideList.push("");
                        },
-                       error =>  this.errorMessage = <any>error);
+                       error =>  this.errorMessage = <any>error);*/
   }
 
 
-  doSave(selectedItem, selectedType){
+  doSave(){
+    this.selectedItem.type = this.selectedType;
     this.viewCtrl.dismiss({
-      selectedItem: selectedItem,
-      selectedType: selectedType
+      itemTemplate: this.selectedItem
     });
   }
 

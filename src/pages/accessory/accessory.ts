@@ -223,8 +223,7 @@ export class AccessoryPage implements OnInit {
             modal.onWillDismiss((data: any) => {
               if (data) {
                 this.navCtrl.push(CreateKnowledgePage, {
-                    template: data.selectedItem,
-                    type: data.selectedType,
+                    template: data.itemTemplate,
                     item: "",
                     key: this.userKey
                 });

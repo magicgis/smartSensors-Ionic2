@@ -42,8 +42,8 @@ export class LoginPage {
 
       if(this.email === '' || this.password === '') {
         let alert = this.alertCtrl.create({
-          title:'Register Error',
-          subTitle:'All fields are rquired',
+          title:'Falha ao registrar',
+          subTitle:'Todos os campos são obrigatórios',
           buttons:['OK']
         });
         alert.present();
@@ -51,7 +51,7 @@ export class LoginPage {
       }
 
       let loader = this.loadingCtrl.create({
-        content: "Logging in..."
+        content: "Conectando..."
       });
       loader.present();
 
@@ -68,7 +68,7 @@ export class LoginPage {
         if(err.message === 'UNAUTHORIZED') errors += 'Password is required.<br/>';
 
         let alert = this.alertCtrl.create({
-          title:'Login Error',
+          title:'Falha ao conectar',
           subTitle:errors,
           buttons:['OK']
         });
@@ -79,7 +79,7 @@ export class LoginPage {
       this.showRegister = false;
       this.showForgotten = false;
       this.showVerifyCode = false;
-      this.pageTitle = "Login";
+      this.pageTitle = "Conectar";
     }
   }
 
@@ -92,8 +92,8 @@ export class LoginPage {
       */
       if(this.name === '' || this.email === '' || this.password === '') {
         let alert = this.alertCtrl.create({
-          title:'Register Error',
-          subTitle:'All fields are rquired',
+          title:'Falha ao Registrar',
+          subTitle:'Todos os campos são obrigatórios',
           buttons:['OK']
         });
         alert.present();
@@ -104,7 +104,7 @@ export class LoginPage {
       console.log(details);
 
       let loader = this.loadingCtrl.create({
-        content: "Registering your account..."
+        content: "Registrando sua conta..."
       });
       loader.present();
 
@@ -124,10 +124,10 @@ export class LoginPage {
           if(e === 'required_password') errors += 'Password is required.<br/>';
           if(e === 'conflict_email') errors += 'A user with this email already exists.<br/>';
           //don't need to worry about conflict_username
-          if(e === 'invalid_email') errors += 'Your email address isn\'t valid.';
+          if(e === 'invalid_email') errors += 'Seu email não é válido.';
         }
         let alert = this.alertCtrl.create({
-          title:'Register Error',
+          title:'Falha ao Registrar',
           subTitle:errors,
           buttons:['OK']
         });

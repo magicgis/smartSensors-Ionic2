@@ -1,6 +1,6 @@
 import {Validators, FormBuilder, FormGroup } from '@angular/forms';
 export class AttributeModel {
-  public attribute: string;
+  public name: string;
   public type: string;
   public value:  any;
 
@@ -9,13 +9,13 @@ export class AttributeModel {
   constructor(input?: any, fb?: FormBuilder){
     if (!input) input = {};
 
-    this.attribute = input["attribute"] || "";
+    this.name = input["name"] || "";
     this.type = input["type"] || "";
     this.value = input["value"] || "";
 
 
     if (fb) this.formGroup = fb.group({
-        attribute: [this.attribute],
+        name: [this.name],
         type: [this.type],
         value : [this.value]
     });

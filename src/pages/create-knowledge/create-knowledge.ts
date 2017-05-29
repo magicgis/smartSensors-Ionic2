@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ModalController, NavController, NavParams, Slides  } from 'ionic-angular';
+import { ModalController, NavController, NavParams, Slides, LoadingController   } from 'ionic-angular';
 import {Validators, FormBuilder, FormGroup, FormArray } from '@angular/forms';
 // Observable operators
 import 'rxjs/add/operator/catch';
@@ -52,10 +52,12 @@ export class CreateKnowledgePage implements OnInit{
               public navParams: NavParams,
               public modalCtrl: ModalController,
               private fb: FormBuilder,
-              private dataService:DataService) {
+              private dataService:DataService,
+              public loadingCtrl:LoadingController) {
     // If we navigated to this page, we will have an item available as a nav param
     this.templateData = this.navParams.get('template');
-    this.templateType = this.navParams.get('type');
+    if (this.templateData) this.templateType = this.templateData.type;
+    else this.templateType = this.navParams.get('type');
     if (this.templateData) this.pageTitle = this.templateData.name;
     this.selectedItem = this.navParams.get('item');
     this.userKey = this.navParams.get('key');
@@ -66,15 +68,10 @@ export class CreateKnowledgePage implements OnInit{
     this.getReferenceData();
     if(this.selectedItem) this.setKnowledgeForm();
     else {
-      this.knowledge = new KnowledgeModel({
-        root: this.userKey,
-        type: this.templateType,
-        subtype: this.templateData.type
-      },this.fb);
+      this.templateData.root = this.userKey;
+      this.knowledge = new KnowledgeModel({template: this.templateData},this.fb);
+      //this.knowledgeForm = this.knowledge.fillTemplate();
       this.knowledgeForm = this.knowledge.getFormGroup();
-      for (let rel of this.templateData.relations) {
-
-      }
     }
   }
 
@@ -148,14 +145,28 @@ export class CreateKnowledgePage implements OnInit{
       if (data) {
         console.log('MODAL DATA', data);
         if (type==='add') this.knowledge[ref].push(data.item);
-        //else this.values[ref + data.item.attribute] = data.item;
+        //else this.values[ref + data.item.name] = data.item;
       }
     });
   }
 
   onSubmit() {
-      this.submitted = true;
       console.log(this.knowledgeForm.value, this.knowledgeForm.valid);
+
+      let loader = this.loadingCtrl.create({
+        content: "Salvando..."
+      });
+      loader.present();
+
+      this.dataService.createKnowledge(this.knowledgeForm.value)
+                      .subscribe(
+                        data => {
+                          console.log ( data );
+                          loader.dismissAll();
+                          this.navCtrl.pop();
+                        },
+                            error =>  this.errorMessage = <any>error
+                        );
   }
 
   // TODO: Remove this when we're done

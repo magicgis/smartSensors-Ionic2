@@ -18,11 +18,10 @@ export class AssociationModel {
   private formCommentedAtArray: FormArray;
   private formSubscribedByArray: FormArray;
 
-  constructor(input?: any, fb?: FormBuilder){
-    if (!input) input = {};
+  private fb: FormBuilder;
 
-    this.abstraction = input["abstraction"] || false;
-    this.parent = input["parent"] || "";
+  constructor(input?: any, fb?: FormBuilder){
+    this.fb = fb;
 
     if (fb) {
       this.formOwnedByArray  = fb.array([]);
@@ -33,47 +32,54 @@ export class AssociationModel {
       this.formSubscribedByArray  = fb.array([]);
     }
 
-    if (input["ownedBy"]) {
-      for(let item of input["ownedBy"]) {
-        let relation = new RelationModel(item, fb);
-        this.ownedBy.push(relation);
-        if (fb) this.formOwnedByArray.push(relation.getFormGroup());
-      }
+    if (input.template) this.fillTemplate(input, fb);
+    else {
+      if ( ! input ) input = {};
 
-    }
-    if (input["connectedTo"]) {
-      for(let item of input["connectedTo"]) {
-        let relation = new RelationModel(item, fb);
-        this.connectedTo.push(relation);
-        if (fb) this.formConnectArray.push(relation.getFormGroup());
+      this.abstraction = input[ "abstraction" ] || false;
+      this.parent      = input[ "parent" ] || "";
+
+      if ( input[ "ownedBy" ] ) {
+        for ( let item of input[ "ownedBy" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.ownedBy.push ( relation );
+          if ( fb ) this.formOwnedByArray.push ( relation.getFormGroup () );
+        }
       }
-    }
-    if (input["subscriberAt"]) {
-      for(let item of input["subscriberAt"]) {
-        let relation = new RelationModel(item, fb);
-        this.subscriberAt.push(relation);
-        if (fb) this.formSubscriberAtArray.push(relation.getFormGroup());
+      if ( input[ "connectedTo" ] ) {
+        for ( let item of input[ "connectedTo" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.connectedTo.push ( relation );
+          if ( fb ) this.formConnectArray.push ( relation.getFormGroup () );
+        }
       }
-    }
-    if (input["likedTo"]) {
-      for(let item of input["likedTo"]) {
-        let relation = new RelationModel(item, fb);
-        this.likedTo.push(relation);
-        if (fb) this.formLikedToArray.push(relation.getFormGroup());
+      if ( input[ "subscriberAt" ] ) {
+        for ( let item of input[ "subscriberAt" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.subscriberAt.push ( relation );
+          if ( fb ) this.formSubscriberAtArray.push ( relation.getFormGroup () );
+        }
       }
-    }
-    if (input["commentedAt"]) {
-      for(let item of input["commentedAt"]) {
-        let relation = new RelationModel(item, fb);
-        this.commentedAt.push(relation);
-        if (fb) this.formCommentedAtArray.push(relation.getFormGroup());
+      if ( input[ "likedTo" ] ) {
+        for ( let item of input[ "likedTo" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.likedTo.push ( relation );
+          if ( fb ) this.formLikedToArray.push ( relation.getFormGroup () );
+        }
       }
-    }
-    if (input["subscribedBy"]) {
-      for(let item of input["subscribedBy"]) {
-        let relation = new RelationModel(item, fb);
-        this.subscribedBy.push(relation);
-        if (fb) this.formSubscribedByArray.push(relation.getFormGroup());
+      if ( input[ "commentedAt" ] ) {
+        for ( let item of input[ "commentedAt" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.commentedAt.push ( relation );
+          if ( fb ) this.formCommentedAtArray.push ( relation.getFormGroup () );
+        }
+      }
+      if ( input[ "subscribedBy" ] ) {
+        for ( let item of input[ "subscribedBy" ] ) {
+          let relation = new RelationModel ( item, fb );
+          this.subscribedBy.push ( relation );
+          if ( fb ) this.formSubscribedByArray.push ( relation.getFormGroup () );
+        }
       }
     }
 
@@ -87,6 +93,32 @@ export class AssociationModel {
         commentedAt: this.formCommentedAtArray,
         subscribedBy: this.formSubscribedByArray
       })
+  }
+
+  public fillTemplate(input, fb){
+
+    this.parent = "";
+    this.abstraction = false;
+
+    if (input.template.relations)
+      for (let item of input.template.relations){
+        if (item.name === "parent")
+          this.parent = item.value;
+        else if (item.name === "abstraction")
+          this.abstraction = item.value;
+        else if (item.values){
+          for (let rel of item.values) {
+            let relation = new RelationModel ( item.attributes, fb);
+            this[ item.name ].push ( relation );
+            if (item.name === "ownedBy" ) this.formOwnedByArray.push ( relation.getFormGroup () );
+            if (item.name === "connectedTo" ) this.formConnectArray.push ( relation.getFormGroup () );
+            if (item.name === "subscriberAt" ) this.formSubscriberAtArray.push ( relation.getFormGroup () );
+            if (item.name === "likedTo" ) this.formLikedToArray.push ( relation.getFormGroup () );
+            if (item.name === "commentedAt" ) this.formCommentedAtArray.push ( relation.getFormGroup () );
+            if (item.name === "subscribedBy" ) this.formSubscribedByArray.push ( relation.getFormGroup () );
+          }
+        }
+      };
   }
 
   public getFormGroup() {

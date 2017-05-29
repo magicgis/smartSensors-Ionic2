@@ -28,9 +28,6 @@ import { FollowersService } from '../providers/followers.service';
 import { MQTTService } from '../providers/mqtt/mqtt.service';
 import { ConfigService } from '../providers/config/config.service';
 
-import { KnowledgeModel } from '../models/knowledge.model'
-import { AssociationModel } from '../models/association.model'
-import { RelationModel } from '../models/relation.model'
 import { BasicObjectModel } from '../models/basic-object.model'
 import { ObjectModel } from '../models/object.model'
 

@@ -73,7 +73,7 @@
                 <ion-list inset>
                   <ion-item-sliding>
                     <ion-item color="light">
-                      Item {{item.value.attribute}} <ion-note> {{item.value.type}} </ion-note>
+                      <span *ngIf="!item.value.name">Item </span>{{item.value.name}} <ion-note> {{item.value.type}} </ion-note>
                     </ion-item>
                     <ion-item-options side="left">
                       <button ion-button color="danger" (click)="removeItem('info', i)">
@@ -82,11 +82,16 @@
                     </ion-item-options>
                   </ion-item-sliding>
                   <ion-item *ngIf="!selectedItem">
-                    <ion-input type="text" formControlName="attribute" placeholder="Atributo"></ion-input>
-                    <ion-input type="text" formControlName="type" placeholder="Tipo"></ion-input>
+                    <ion-label stacked >Atributo</ion-label>
+                    <ion-input type="text" formControlName="name"></ion-input>
+                  </ion-item>
+                  <ion-item *ngIf="!selectedItem">
+                    <ion-label stacked >Tipo</ion-label>
+                    <ion-input type="text" formControlName="type"></ion-input>
                   </ion-item>
                   <ion-item>
-                    <ion-input type="text" formControlName="value" placeholder="Valor"></ion-input>
+                    <ion-label stacked >Valor</ion-label>
+                    <ion-input type="text" formControlName="value"></ion-input>
                   </ion-item>
                 </ion-list>
               </span>
@@ -121,7 +126,7 @@
                 <ion-list inset class="form-group" [formGroupName]="i" *ngFor="let item of knowledgeForm.controls.data.controls.configurations.controls; let i = index">
                   <ion-item-sliding>
                     <ion-item icon-right color="light" (click)="listConfigurations[i] = !listConfigurations[i]">
-                      Item {{item.value.attribute}}  <ion-note> {{item.value.type}} </ion-note>
+                      <span *ngIf="!item.value.name">Item </span> {{item.value.value}}  <ion-note> {{item.value.name}} </ion-note>
                       <ion-icon name="arrow-dropright" *ngIf="!listConfigurations[i]" item-right></ion-icon>
                       <ion-icon name="arrow-dropdown"  *ngIf="listConfigurations[i]" item-right></ion-icon>
                     </ion-item>
@@ -132,12 +137,15 @@
                     </ion-item-options>
                   </ion-item-sliding>
                   <ion-item *ngIf="listConfigurations[i] && !selectedItem">
-                    <ion-input type="text" formControlName="attribute" placeholder="Atributo"></ion-input>
+                    <ion-label>Atributo: </ion-label>
+                    <ion-input type="text" formControlName="name" placeholder="Atributo"></ion-input>
                   </ion-item>
                   <ion-item *ngIf="listConfigurations[i] && !selectedItem">
+                    <ion-label>Tipo: </ion-label>
                     <ion-input type="text" formControlName="type" placeholder="Tipo"></ion-input>
                   </ion-item>
                   <ion-item *ngIf="listConfigurations[i]">
+                    <ion-label>Valor: </ion-label>
                     <ion-input type="text" formControlName="value" placeholder="Valor"></ion-input>
                   </ion-item>
                 </ion-list>
@@ -209,27 +217,10 @@
       <ion-fab right bottom>
         <button ion-fab color="light"><ion-icon name="send"></ion-icon></button>
         <ion-fab-list side="left">
-          <button ion-fab color="secondary" [disabled]="knowledgeForm.invalid" (ngClick)="onSubmit($event)" ><ion-icon name="send"></ion-icon></button>
+          <button ion-fab color="secondary" (click)="onSubmit()" ><ion-icon name="send"></ion-icon></button>
           <!--<button ion-fab color="light" (click)="newHero(); knowledgeForm.reset()"><ion-icon name="logo-googleplus"></ion-icon></button>-->
         </ion-fab-list>
       </ion-fab>
     </form>
   </div>
-  <div [hidden]="!submitted">
-    <h2>You submitted the following:</h2>
-    <div class="row">
-      <div class="col-xs-3">Nome</div>
-      <div class="col-xs-9  pull-left">{{ knowledge.data.name }}</div>
-    </div>
-    <div class="row">
-      <div class="col-xs-3">Label</div>
-      <div class="col-xs-9 pull-left">{{ knowledge.data.label }}</div>
-    </div>
-    <div class="row">
-      <div class="col-xs-3">Descrição</div>
-      <div class="col-xs-9 pull-left">{{ knowledge.data.description }}</div>
-    </div>
-    <br>
-    <button class="btn btn-primary" (click)="submitted=false">Editar</button>
-</div>
 </ion-content>
