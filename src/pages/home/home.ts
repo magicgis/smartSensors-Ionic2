@@ -1,42 +1,41 @@
-import { OnInit, Component , OnDestroy } from '@angular/core';
+import { Component , OnDestroy } from '@angular/core';
 import { NavParams, NavController, Platform, AlertController  } from 'ionic-angular';
 import { Auth, User } from '@ionic/cloud-angular';
 
 import { LocalNotifications } from '@ionic-native/local-notifications';
-import * as moment from 'moment';
 import { Observable }        from 'rxjs/Observable';
 
-// Observable class extensions
-import 'rxjs/add/observable/of';
-
-// Observable operators
-import 'rxjs/add/operator/catch';
+import { Storage } from '@ionic/storage';
 
 import { LoginPage } from '../login/login';
 
 import { KnowledgeModel } from '../../models/knowledge.model';
 import { DataService } from '../../providers/apiData.service';
 
-import { Packet } from 'mqtt';
-import { MQTTService } from '../../providers/mqtt/mqtt.service';
-import { ConfigService } from '../../providers/config/config.service';
+//import { Packet } from 'mqtt';
+//import { MQTTService } from '../../providers/mqtt/mqtt.service';
+import { SocialSharing } from '@ionic-native/social-sharing';
+import { SpeechRecognition } from '@ionic-native/speech-recognition';
+
+
+const period: number = 6000000; //10 mins
 
 @Component({
   selector: 'page-home',
   templateUrl: 'home.html'
 })
-export class HomePage implements OnInit, OnDestroy {
+export class HomePage implements OnDestroy {
 
   // Stream of messages
-  public messages: Observable<Packet>;
+  //public messages: Observable<Packet>;
 
   // Array of historic message (bodies)
-  public mq: Array<Packet> = [];
+  //public mq: Array<Packet> = [];
 
   // A count of messages received
   public count = 0;
 
-  public config = {
+  public configb = {
       "host": "m11.cloudmqtt.com",
       "port": 31102,
       "path": "",
@@ -48,10 +47,20 @@ export class HomePage implements OnInit, OnDestroy {
       "keepalive": 10
   };
 
+  public config = {
+    "host": "192.168.0.6",
+    "port": 1883,
+    "path": "",
+    "ssl": true,
+    "user": "guest",
+    "pass": "guest",
+    "subscribe": ["channelupdates"],
+    "publish": ["channelupdates"],
+    "keepalive": 10
+  };
+
   errorMessage: string;
   selectedItem: any;
-  userKey: any;
-  userID: any;
   keys: any[];
 
   notifications: any[] = [];
@@ -59,79 +68,203 @@ export class HomePage implements OnInit, OnDestroy {
   ouvintes: Array<number> = [];
 
   asyncChannels$: Observable<KnowledgeModel[]>;
+  lastSync: number = 0;
+  objectChannels: Object = {};
 
-  // Array of historic channels
-  public channels: Array<KnowledgeModel> = [];
+
+  public userKey: any;
+  public channels: any = [];// Array of historic channels
   public lookup: Object = {};
-  // A count of messages received
-  public channel_count = 0;
+  public channel_count = 0;// A count of messages received
 
+  op: string = "$gt";
   viewModel: any = [];
-  //heroes: Observable<Hero[]>;
   pushTopic: string = "";
   pushMessage: string = "push message will be displayed here";
+  speeachAvailable: boolean = false;
 
   constructor(public navCtrl: NavController,
               public platform: Platform,
               public navParams: NavParams,
               public user:User,
               public auth:Auth,
+              public alertCtrl: AlertController,
               public dataService:DataService,
               private localNotifications: LocalNotifications,
-              private _mqService: MQTTService,
-              private _configService: ConfigService) {
+              private socialSharing: SocialSharing,
+              private speechRecognition: SpeechRecognition,
+              //private _mqService: MQTTService,
+              public storage: Storage) {
     this.userKey = navParams.get("key");
     console.log(user);
-  }
 
-  ngOnInit() {
-    // Get configuration from config service...
-    this._configService.getConfig('assets/api-config.json').then(
-      config => {
-        config.user = this.user.id;
-        config.pass = this.user.id;
-        config.subscribe = [];
+    if (this.platform.is('cordova')) {
+      this.speechRecognition.isRecognitionAvailable ()
+        .then ( ( available: boolean ) => {
+          console.log ( available )
+          if ( ! available ) {
+            this.speeachAvailable = available;
+            return;
+          }
+          // Check permission
+          this.speechRecognition.hasPermission ()
+            .then ( ( hasPermission: boolean ) => {
+              console.log ( hasPermission );
+              if ( ! hasPermission )
+                this.speechRecognition.requestPermission ()
+                  .then ( () => {
+                    this.speeachAvailable = true;
+                    console.log ( 'Granted' );
+                  }, () => {
+                    this.speeachAvailable = false;
+                    console.log ( 'Denied' )
+                  } )
+              else this.speeachAvailable = hasPermission;
+            } );
+        } )
+    }
 
-        //this.asyncChannels$ = this.dataService.getData(["channel","user", this.userKey]);
-        this.dataService.getData(["subscribedBy", this.userKey])
-                .subscribe(channels => {
+    //this.config.user      = this.user.id;
+    //this.config.pass      = this.user.id;
+    //this.config.subscribe = [];
+
+    storage.ready().then(() => {
+        this.storage.get("subscribedBy" + this.userKey).then((subscriptions) => {
+          console.log(subscriptions);
+
+          if (subscriptions) this.channels = subscriptions;
+
+          this.storage.get("subscribedBySyncs" + this.userKey).then((sync) => {
+              let query = null;
+              if (sync) this.lastSync = sync;
+
+              if (this.lastSync) query = [ this.op, this.lastSync ];
+
+              this.dataService.getData( [ "subscribedBy", this.userKey ], query )
+                .subscribe ( newSubs => {
                   //config.subscribe = ["591eea676a040fc9091938d2", "58f3ac46866064c6189ec943","58f3ac46866064c6189ec927"];
-                  for (let chan of channels){
-                        var id = this.channels.push(chan);
-                        config.subscribe.push(chan._id);
-                        this.lookup[chan._id] = this.channels[--id];
+                  if (!this.channels) this.channels = [];
+                  for ( let subs of newSubs ) {
+                    let id = this.channels.push ( subs );
+                    //this.config.subscribe.push ( subs._id );
+                    if ( this.lastSync < subs.sync ) this.lastSync = subs.sync;
+                    this.lookup[ subs._id ] = this.channels[ -- id ];
                   }
+
+                  this.storage.set("subscribedBy" + this.userKey, this.channels);
+                  this.storage.set("subscribedBySyncs" + this.userKey, this.lastSync );
+
                   // ... then pass it to (and connect) the message queue:
                   /*this._mqService.configure(config);
-                  this._mqService.try_connect()
-                    .then(this.on_connect)
-                    .catch(this.on_error);*/
+                   this._mqService.try_connect()
+                   .then(this.on_connect)
+                   .catch(this.on_error);*/
                 });
-      }
-    );
+
+              for ( let item in this.channels ) {
+                if ( this.channels[ item ].sync < Date.now () - period ) this.channels.splice(item,1);
+              }
+          });
+        });
+    });
+  }
+
+  doSpeech(){
+
+    if (!this.speeachAvailable) {
+      console.log("Speech not available");
+      return;
+    }
+
+    let options = {
+      language: "pt-BR",
+      matches: 1
+    }
+
+    // Start the recognition process
+    this.speechRecognition.startListening(options)
+      .subscribe(
+        (matches: Array<string>) => console.log(matches),
+        (onerror) => console.log('error:', onerror)
+      )
+
+  }
+
+  stopSpeech(){
+    // Stop the recognition process (iOS only)
+    this.speechRecognition.stopListening();
   }
 
   changed(item){
-    var now = Date.now();
-    var diffMs = (now - item);
-    var diffTime = Math.floor(diffMs / 86400000); // days
+    let now = Date.now();
+    let diffMs = (now - item);
+    let diffTime = Math.floor(diffMs / 86400000); // days
     if (diffTime>0) return diffTime;
     diffTime = Math.floor((diffMs % 86400000) / 3600000); // hours
     if (diffTime>0) return diffTime;
     return Math.round(((diffMs % 86400000) % 3600000) / 60000); // minutes
   }
 
-  trackByFn(index,item){
-     return item.id
+  trackBySync(index,item){
+    return item.sync;
+  }
+
+  share(info) {
+
+    let alert = this.alertCtrl.create();
+    alert.setTitle('Compartilhar alerta');
+
+    alert.addInput({
+      type: 'string',
+      name: 'msg',
+      label: 'Mensagem'
+    });
+
+    alert.addButton('Cancel');
+    alert.addButton({
+      text: 'Face',
+      handler: data => {
+        console.log('Face data:', data);
+        this.shareFacebook(info, data.msg);
+      }
+    });
+    alert.addButton({
+      text: 'Whats',
+      handler: data => {
+        console.log('Whats data:', data);
+        this.shareWhats(info, data.msg);
+      }
+    });
+    alert.present();
+  }
+
+  shareFacebook(info, message){
+    // Check if sharing via email is supported
+    this.socialSharing.shareViaFacebook(
+      message,
+      info.data.image
+    ).then(() => { }).catch(() => {
+      // Sharing via face is not possible
+    });
+  }
+
+  shareWhats(info, message){
+    // Check if sharing via email is supported
+    this.socialSharing.shareViaWhatsApp(
+      message,
+      info.data.image
+    ).then(() => {}).catch(() => {
+      // Sharing via Whats is not possible
+    });
   }
 
   ngOnDestroy() {
-    this._mqService.disconnect();
+    //this._mqService.disconnect();
   }
 
 
   /** Callback on_connect to queue */
-  public on_connect = () => {
+  /*public on_connect = () => {
 
     // Store local reference to Observable
     // for use with template ( | async )
@@ -139,17 +272,17 @@ export class HomePage implements OnInit, OnDestroy {
 
     // Subscribe a function to be run on_next message
     this.messages.subscribe(this.on_next);
-  }
+  }*/
 
   /** Consume a message from the _mqService */
-  public on_next = (message: Packet) => {
+  /*public on_next = (message: Packet) => {
 
     // Store message in "historic messages" queue
     this.mq.push(message);
 
     if (message) {
       this.pushTopic = message["topic"];
-      var changedObj = message["payload"];
+      let changedObj = message["payload"];
       this.pushMessage = changedObj.toString();
       if (changedObj.sync > this.lookup[message["topic"]].sync)
         this.lookup[message["topic"]][changedObj.type] = changedObj.item;
@@ -162,7 +295,7 @@ export class HomePage implements OnInit, OnDestroy {
   public on_error = () => {
     console.error('Ooops, error in RawDataComponent');
   }
-
+*/
   /*exitApp(){
     console.log("----------");
     this.platform.exitApp();
@@ -179,7 +312,7 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   /** Consume a channel */
-  public on_channel = (channel) => {
+  /*public on_channel = (channel) => {
 
     // Store channels
     for (let chan of channel){
@@ -187,10 +320,10 @@ export class HomePage implements OnInit, OnDestroy {
        // Count it
        this.channel_count++;
     }
-  }
+  }*/
 
   selectObjects(channelId) {
-    this.dataService.getData([channelId])
+    this.dataService.getData([channelId],null)
             .subscribe(model => {
               this.channels.push(new KnowledgeModel(model));
             });
@@ -238,4 +371,5 @@ export class HomePage implements OnInit, OnDestroy {
       this.localNotifications.cancelAll();
 
   }
+  
 }

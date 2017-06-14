@@ -89,7 +89,7 @@ export class MQTTService implements TransportService {
     const options: mqtt.IClientOptions = {
       'keepalive': this.config.keepalive,
       'reconnectPeriod': 10000,
-      'clientId': 'clientid_' + Math.floor(Math.random() * 65535),
+      'clientId': this.config.clientId || 'clientid_' + Math.floor(Math.random() * 65535),
       'username': this.config.user,
       'password': this.config.pass
     };

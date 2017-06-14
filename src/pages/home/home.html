@@ -3,7 +3,7 @@
     <button ion-button menuToggle>
       <ion-icon name="menu"></ion-icon>
     </button>
-    <ion-title>Canais Ativos</ion-title>
+    <ion-title>Novidades</ion-title>
     <ion-buttons end>
      <button ion-button icon-only (click)="logout()">
        <ion-icon name="log-out"></ion-icon>
@@ -13,32 +13,21 @@
 </ion-header>
 
 <ion-content class="cards-bg preview-cards">
-<!--  <div id="raw">
-      <h5>{{pushTopic}}</h5>
-      <p>{{count}} total</p>
-      <pre>{{messages | async}}</pre>
-
-      <div *ngIf="mq.length" class="panel panel-default">
-          <div class="panel-heading">
-              <span>History:</span>
-          </div>
-          <div class="panel-body" class="debug-mq-panel">
-              <ol reversed>
-                  <li *ngFor="let m of mq | reverse "><pre>{{m}}</pre></li>
-              </ol>
-          </div>
-      </div>
-  </div>-->
-  <ion-fab right top>
+  <!--<ion-fab left top>
     <app-mq-status></app-mq-status>
+  </ion-fab>-->
+  <ion-fab right bottom>
+    <button ion-fab mini (touchstart)="doSpeech()" color="light" (touchend)="stopSpeech()">
+      <ion-icon name="mic" ></ion-icon>
+    </button>
   </ion-fab>
   <ion-card class="advanced-background" *ngFor="let item of channels; let i = index; trackBy: trackByFn" [attr.data-index]="i">
     <img [src]='item.data.configurations?.image'>
-    <ion-fab right top>
+    <!--<ion-fab right top>
       <button ion-fab mini>
         <ion-icon [name]="item.data.configurations?.pin.icon" [color]="item.data.configurations?.pin.color"></ion-icon>
       </button>
-    </ion-fab>
+    </ion-fab>-->
 
     <ion-item class="advanced-trans">
       <p item-start>{{item.data.configurations?.label}}</p>
@@ -59,15 +48,20 @@
     <ion-grid no-padding>
       <ion-row>
         <ion-col>
-          <button ion-button full icon-left clear small>
-            <ion-icon name="thumbs-up"></ion-icon>
-            <div> {{item.data.likes}} Likes</div>
+          <button ion-button full icon-left clear small color="dark" (click)="share(item.data)">
+            <ion-icon name="share"></ion-icon>
           </button>
         </ion-col>
-        <ion-col >
+        <ion-col>
+          <button ion-button full icon-left clear small>
+            <ion-icon name="thumbs-up"></ion-icon>
+            <div> {{item.data.likes}}</div>
+          </button>
+        </ion-col>
+        <ion-col>
           <button ion-button full icon-left clear small color="dark">
             <ion-icon name="text"></ion-icon>
-            <div>{{item.data.comments}} Comments</div>
+            <div>{{item.data.comments}}</div>
           </button>
         </ion-col>
         <ion-col center text-center >
@@ -80,11 +74,11 @@
 
 
 
-    <ion-tabs color="light" class="advanced-cards" no-navbar>
+    <!--<ion-tabs color="light" class="advanced-cards" no-navbar>
       <ion-tab color="light" tabTitle="Tue" tabIcon="sunny"></ion-tab>
       <ion-tab tabTitle="Wed" tabIcon="partly-sunny"></ion-tab>
       <ion-tab tabTitle="Thr" tabIcon="cloudy"></ion-tab>
-    </ion-tabs>
+    </ion-tabs>-->
   </ion-card>
 </ion-content>
 

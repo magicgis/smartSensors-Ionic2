@@ -4,9 +4,8 @@ import { FacebookAuth, User} from '@ionic/cloud-angular';
 import { DataService } from '../../providers/apiData.service';
 
 import { LoginPage } from '../login/login';
-import { HomePage } from '../home/home';
 
-import {KnowledgeModel} from '../../models/knowledge.model';
+import { AssociationModel, KnowledgeModel, ProfileModel } from '../../models/interfaces';
 
 @Component({
   selector: 'page-profile',
@@ -16,8 +15,8 @@ export class ProfilePage {
   userReady: boolean = false;
   selectedItem: any;
   userKey: any;
-  public followings: Array<KnowledgeModel> = [];
-  public profile: KnowledgeModel;
+  public followings: Array<KnowledgeModel<ProfileModel, AssociationModel>> = [];
+  public profile: KnowledgeModel<ProfileModel, AssociationModel>;
 
   constructor(public user: User,
               public facebookAuth: FacebookAuth,
@@ -30,10 +29,10 @@ export class ProfilePage {
   }
 
   ngOnInit() {
-    this.dataService.getOne([ this.userKey]).subscribe((data: KnowledgeModel) => {
-      this.profile = new KnowledgeModel(data);
+    this.dataService.getOne<ProfileModel>([ this.userKey]).subscribe((data: KnowledgeModel<ProfileModel, AssociationModel>) => {
+      this.profile = data;
     });
-    this.dataService.getData(["subscribedBy", this.userKey]).subscribe((data: KnowledgeModel[]) => {
+    this.dataService.getData<ProfileModel>(["subscribedBy", this.userKey],null).subscribe((data: KnowledgeModel<ProfileModel, AssociationModel>[]) => {
       for (let follow of data){
         this.followings.push(follow);
       }

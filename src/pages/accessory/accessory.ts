@@ -4,14 +4,15 @@ import { ModalController,NavController, NavParams, Platform, ActionSheetControll
 // Observable operators
 import 'rxjs/add/operator/catch';
 
-import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
+import { ShowMapModal }  from '../modals/show-map-modal';
+import { ChooseItemModal }  from '../modals/choose-item-modal';
 import { AccessoryDetailsPage } from '../accessory-details/accessory-details';
 import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
 
-import { KnowledgeModel } from '../../models/knowledge.model';
+import { AssociationModel, EquipmentModel, KnowledgeModel } from '../../models/interfaces';
 
 @Component({
   selector: 'page-accessory',
@@ -24,10 +25,10 @@ export class AccessoryPage implements OnInit {
   listed:boolean = false;
 
   errorMessage: string;
-  selectedItem: KnowledgeModel;
+  selectedItem: KnowledgeModel<EquipmentModel, AssociationModel>;
   userKey: any;
-  objects: Array<KnowledgeModel> = [];
-  filteredItems: Array<KnowledgeModel> = [];
+  objects: Array<KnowledgeModel<EquipmentModel, AssociationModel>> = [];
+  filteredItems: Array<KnowledgeModel<EquipmentModel, AssociationModel>> = [];
 
   newItemWindow: Object = {
     title: "Novo Objeto",
@@ -35,7 +36,7 @@ export class AccessoryPage implements OnInit {
     create: "Criar Objeto"
   };
 
-   shouldAnimate: boolean = true;
+   shouldAnimate: boolean = false;
 
   constructor(public user:User,
               public navCtrl: NavController,
@@ -48,6 +49,12 @@ export class AccessoryPage implements OnInit {
     this.selectedItem = navParams.get('item');
     this.userKey = navParams.get('key');
   }
+
+  showMap() {
+    let modal = this.modalCtrl.create(ShowMapModal,{ items: this.objects, key: this.userKey });
+    modal.present();
+  }
+
 
   // Push a search term into the observable stream.
   getItems(term: string) {
@@ -80,9 +87,9 @@ export class AccessoryPage implements OnInit {
           console.log(error);
           return Observable.of<any[]>([]);
         });*/
-    this.dataService.getData(["actuator" , "ownedBy", this.userKey])
+    this.dataService.getData<EquipmentModel>(["actuator" , "ownedBy", this.userKey], null)
                      .subscribe(
-                       (data: KnowledgeModel[]) => this.objects = data,
+                       (data: KnowledgeModel<EquipmentModel, AssociationModel>[]) => this.objects = data,
                        error =>  this.errorMessage = <any>error);
   }
 
@@ -90,100 +97,12 @@ export class AccessoryPage implements OnInit {
     if (!item) { return; }
     this.dataService.createKnowledge(item)
                 .subscribe(
-                (data: KnowledgeModel)  => this.objects.push(data),
+                (data: KnowledgeModel<EquipmentModel, AssociationModel>)  => this.objects.push(data),
                   error =>  this.errorMessage = <any>error);
   }
 
   toggleList(){this.listed = !this.listed};
   toggleDelete(){this.shouldShowDelete = !this.shouldShowDelete};
-
-  startClick(event: any, itemIndex: number){
-    /*
-    console.log(user);
-    console.log($scope.pageTitle);
-    $scope.boardModal.show();
-    $scope.configurations = {
-      hostip: "192.168.0.100",
-      hostport: 8001,
-      email: user.email,
-      object: object,
-      serialport: ""
-    };
-    */
-  }
-  startItem(event: any, item: any){
-    var configurations = {
-      hostip: "",
-      hostport: "",
-      email: "",
-      sink: "",
-      serialport: ""
-    };
-    var body = {};
-
-    body["equipmentId"] = item._id;
-    body["action"] = 'start';
-    body["type"] = 'actuator';
-    body["data"] ={
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport,
-      configurations: item.data.configurations
-    };
-
-    this.dataService.startEquipment(body)
-                     .subscribe(
-                       data => this.objects = data,
-                       error =>  this.errorMessage = <any>error);
-
-    /*(
-     socket.emit("startBoard", JSON.stringify({
-     ip: vm.hostip,
-     port: vm.hostport,
-     email: currentUser.email,
-     sink: vm.listItems[currentNavItem].$id,
-     serialport: ""
-     }));
-     */
-
-    /*
-
-    $mdDialog.show({
-     controller: WaitController,
-     parent: angular.element(document.body),
-     targetEvent: $event,
-     templateUrl: 'app/core/layouts/wait.dialog.templ.html',
-     clickOutsideToClose: false,
-     openFrom: {
-     top: -50,
-     width: 30,
-     height: 80
-     },
-     closeTo: {
-     left: 1500
-     }
-     });
-
-     function WaitController($scope, $mdDialog) {
-     $scope.hide = function() {vm.status = 'Processado com sucesso.'};
-     $scope.close = function(result) {$mdDialog.hide(result)};
-     $scope.cancel = function() {vm.status = 'You cancelled the dialog.'};
-     };
-
-
-    // var email = "leoalmeida.rj@gmail.com"; //currentUser.email,
-    alert = ApiDataService.startBoard({
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport
-    }, cbStartBoardSuccess, cbStartBoardError);
-
-    */
-  }
 
   addItem() {
 
@@ -215,8 +134,8 @@ export class AccessoryPage implements OnInit {
       cssClass: 'action-sheets-basic-page',
       buttons: [
         {
-          text: 'Novo Acessório',
-          icon: !this.platform.is('ios') ? 'arrow-dropright-circle' : null,
+          text: 'Novo',
+          icon: !this.platform.is('ios') ? 'add' : null,
           handler: () => {
             let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', itemType: 'actuator', title: 'Novo Acessório'});
             modal.present();
@@ -241,7 +160,7 @@ export class AccessoryPage implements OnInit {
           }
         },
         {
-          text: 'Sair',
+          text: 'Voltar',
           role: 'quit', // will always sort to be on the bottom
           icon: !this.platform.is('ios') ? 'close' : null,
           handler: () => {

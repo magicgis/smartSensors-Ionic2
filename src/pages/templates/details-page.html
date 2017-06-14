@@ -1,21 +1,29 @@
 <ion-header>
   <ion-navbar>
     <ion-title>{{pageTitle}}</ion-title>
-    <ion-buttons end>
+    <!--<ion-buttons end>
        <button ion-button icon-only (click)="updateItem()">
          <ion-icon name="arrow-dropright"></ion-icon>
        </button>
-     </ion-buttons>
+     </ion-buttons>-->
+    <ion-buttons end>
+      <button ion-button icon-only (click)="openMenu()">
+        <ion-icon name="more"></ion-icon>
+      </button>
+    </ion-buttons>
   </ion-navbar>
 </ion-header>
 <ion-content>
+  <ion-fab top right>
+    <button ion-fab mini (click)="showMap()"><ion-icon name="compass"></ion-icon></button>
+  </ion-fab>
   <ion-list>
       <ion-item-divider icon-right color="light">
         Informações Básicas
       </ion-item-divider>
       <ion-item>
         <ion-label color="primary">Conectado</ion-label>
-        <ion-toggle [ngModel]="data?.connected" (ionChange)="toggleUpdateAttr($event, '',data.connected)"></ion-toggle>
+        <ion-toggle [ngModel]="data?.connected" [disabled]="type!=='board'" (ionChange)="toggleUpdateAttr($event, '',data.connected)"></ion-toggle>
       </ion-item>
       <ion-item>
         <ion-label color="primary">Habilitado</ion-label>
@@ -63,12 +71,12 @@
         </ion-avatar>
         <ion-label>Ícone</ion-label>
       </ion-item>
-      <ion-item *ngIf="data?.geo">
+      <ion-item *ngIf="location">
         <ion-avatar item-left>
           <img src="assets/icons/location-icon.png">
         </ion-avatar>
         <ion-label>
-          {{data?.geo.address}}
+          {{location.text}}
         </ion-label>
       </ion-item>
       <ion-item-divider icon-right color="light" (click)="listConfigurations = !listConfigurations">
@@ -151,7 +159,7 @@
           </ion-avatar>
           <h2>{{item.data.name}}</h2>
           <h3><em>{{item.type}}</em></h3>
-          <p>{{item.subtype}}</p>
+          <p>{{item.category}}</p>
           <ion-icon name="chevron-right" item-right></ion-icon>
         </button>
         <ion-item-options side="right">

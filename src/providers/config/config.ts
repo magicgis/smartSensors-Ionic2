@@ -7,6 +7,7 @@ export interface Config {
   host: string;   // 'localhost' or '127.0.0.1'
   port: number;   // 15675
   path: string;   // 'ws'
+  clientId: string;
 
   ssl: boolean;   // false
 

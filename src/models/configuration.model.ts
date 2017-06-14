@@ -1,4 +1,3 @@
-import { AttributeModel } from '../../models/attribute.model';
 export class ConfigurationModel {
   public controller: string;
   public events: Array<string> = [];

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ModalController,NavController, NavParams, Platform, ActionSheetController } from 'ionic-angular';
 
-import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
+import { ChooseItemModal }  from '../modals/choose-item-modal';
 
 import { TopicDesignerPage } from '../topic-designer/topic-designer';
 import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
@@ -9,6 +9,9 @@ import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
 
+
+import { Geolocation } from '@ionic-native/geolocation';
+import { ShowMapModal } from '../modals/show-map-modal';
 
 @Component({
   selector: 'page-topic',
@@ -20,6 +23,8 @@ export class TopicPage {
   shouldShowDelete:boolean = false;
   listed:boolean = false;
 
+
+  errorMessage: string;
   selectedItem: any;
   userKey: any;
   objects: Array<{}>;
@@ -30,7 +35,9 @@ export class TopicPage {
     create: "Criar Objeto"
   };
 
-  shouldAnimate: boolean = true;
+  watchID = {};
+
+  shouldAnimate: boolean = false;
 
   constructor(public user:User,
               public navCtrl: NavController,
@@ -38,99 +45,91 @@ export class TopicPage {
               public platform: Platform,
               public actionsheetCtrl: ActionSheetController,
               public modalCtrl: ModalController,
-              public dataService:DataService) {
+              public dataService:DataService,
+              private geolocation: Geolocation) {
     // If we navigated to this page, we will have an item available as a nav param
     this.selectedItem = navParams.get('item');
     this.userKey = navParams.get('key');
   }
 
-  /*ngOnInit() {
-        this.dataService.findAll(["object", "sink", "all"]).subscribe(
-            data => this.objects = data
-        );
-  }*/
+  ngOnInit() { this.getObjects(); }
 
-  ionViewDidLoad() {
-    this.dataService.getData(["topic" , "ownedBy", this.userKey]).subscribe((objects: any[]) => {
-      this.objects = objects;
-    });
+  getObjects() {
+    this.dataService.getData(["topic" , "ownedBy", this.userKey],null)
+      .subscribe(
+        data => this.objects = data,
+        error =>  this.errorMessage = <any>error);
+  }
+
+  addTopic(item) {
+    if (!item) { return; }
+    this.dataService.createKnowledge(item)
+      .subscribe(
+        data  => this.objects.push(data),
+        error =>  this.errorMessage = <any>error);
   }
 
   toggleList(){this.listed = !this.listed};
   toggleDelete(){this.shouldShowDelete = !this.shouldShowDelete};
 
-  startClick(event: any, itemIndex: number){
-    /*
-    console.log(user);
-    console.log($scope.pageTitle);
-    $scope.boardModal.show();
-    $scope.configurations = {
-      hostip: "192.168.0.100",
-      hostport: 8001,
-      email: user.email,
-      object: object,
-      serialport: ""
-    };
-    */
-  }
-  startItem(event: any, itemIndex: number){
+  toggleItemStatus(item: any) {
+    if (!this.watchID[item] || this.watchID[item].closed)
+      this.watchID[item] = this.geolocation.watchPosition({ enableHighAccuracy : true,timeout : 60000,maximumAge : 0 })
+          .filter((p) => p.coords !== undefined)
+          .subscribe(position => {
+              var options = {
+                "topicKeys": [
+                  { "topicId": item }
+                ],
+                "coordinates": [position.coords.latitude, position.coords.longitude],
+                "radius": 3000
+              };
 
+              this.dataService.evaluateTopic(options)
+                .subscribe((data) => {
+                    console.log ( data );
+                  },error =>  this.errorMessage = <any>error);
+            }, error => this.errorMessage = <any>error);
+    else this.watchID[item].unsubscribe();
+  };
 
-    /*(
-     socket.emit("startBoard", JSON.stringify({
-     ip: vm.hostip,
-     port: vm.hostport,
-     email: currentUser.email,
-     sink: vm.listItems[currentNavItem].$id,
-     serialport: ""
-     }));
-     */
-
-    /*
-
-    $mdDialog.show({
-     controller: WaitController,
-     parent: angular.element(document.body),
-     targetEvent: $event,
-     templateUrl: 'app/core/layouts/wait.dialog.templ.html',
-     clickOutsideToClose: false,
-     openFrom: {
-     top: -50,
-     width: 30,
-     height: 80
-     },
-     closeTo: {
-     left: 1500
-     }
-     });
-
-     function WaitController($scope, $mdDialog) {
-     $scope.hide = function() {vm.status = 'Processado com sucesso.'};
-     $scope.close = function(result) {$mdDialog.hide(result)};
-     $scope.cancel = function() {vm.status = 'You cancelled the dialog.'};
-     };
-
-
-    // var email = "leoalmeida.rj@gmail.com"; //currentUser.email,
-    alert = ApiDataService.startBoard({
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport
-    }, cbStartBoardSuccess, cbStartBoardError);
-
-    */
+  addItem() {
+    /*let modal = this.modalCtrl.create(ChooseItemModal);
+    modal.present();
+    modal.onWillDismiss((data: any) => {
+      if (data) {
+        this.navCtrl.push(CreateKnowledgePage, {
+          info: data,
+          item: "",
+          key: this.userKey
+        });
+        console.log('MODAL DATA', data);
+      }
+    });*/
   }
 
-  remove(event: any, itemIndex: number){
 
+  showMap() {
+    let modal = this.modalCtrl.create(ShowMapModal,{ items: this.objects, key: this.userKey });
+    modal.present();
+  }
+
+
+  updateItem(itemId: string) {
+    this.navCtrl.push(CreateKnowledgePage, {
+      item: itemId,
+      key: this.userKey
+    });
+  }
+
+  removeItem(event: any, itemId: string){
+    this.dataService.removeKnowledge(itemId)
   }
 
   itemTapped(event: any, itemId: string) {
     this.navCtrl.push(TopicDesignerPage, {
-        item: itemId,
-        key: this.userKey
+      item: itemId,
+      key: this.userKey
     });
   }
 

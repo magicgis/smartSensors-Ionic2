@@ -1,18 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController,NavController, NavParams, Platform, ActionSheetController } from 'ionic-angular';
-import { Observable }        from 'rxjs/Observable';
-// Observable operators
 import 'rxjs/add/operator/catch';
 
-import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
+import { ShowMapModal }  from '../modals/show-map-modal';
+import { ChooseItemModal }  from '../modals/choose-item-modal';
 import { SourceDetailsPage } from '../source-details/source-details';
 import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
-
-
-import { AttributeModel } from '../../models/attribute.model';
 
 @Component({
   selector: 'page-source',
@@ -36,7 +32,7 @@ export class SourcePage implements OnInit {
     create: "Criar Objeto"
   };
 
-   shouldAnimate: boolean = true;
+   shouldAnimate: boolean = false;
 
   constructor(public user:User,
               public navCtrl: NavController,
@@ -67,7 +63,7 @@ export class SourcePage implements OnInit {
   ngOnInit() { this.getObjects(); }
 
   getObjects() {
-    this.dataService.getData(["sensor" , "ownedBy", this.userKey])
+    this.dataService.getData(["sensor" , "ownedBy", this.userKey],null)
                      .subscribe(
                        data => this.objects = data,
                        error =>  this.errorMessage = <any>error);
@@ -84,69 +80,6 @@ export class SourcePage implements OnInit {
   toggleList(){this.listed = !this.listed};
   toggleDelete(){this.shouldShowDelete = !this.shouldShowDelete};
 
-  startOnline(event: any, itemId: string, configurations: any){
-    var body = {
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport
-    };
-
-    /*
-    console.log(user);
-    console.log($scope.pageTitle);
-    $scope.boardModal.show();
-    $scope.configurations = {
-      hostip: "192.168.0.100",
-      hostport: 8001,
-      email: user.email,
-      object: object,
-      serialport: ""
-    };
-    */
-  }
-
-  startItem(event: any, item: any){
-    var configurations = {
-      hostip: "",
-      hostport: "",
-      email: "",
-      sink: "",
-      serialport: "",
-    };
-
-    var body = {};
-
-    body["equipmentId"] = item._id;
-    body["action"] = 'start';
-    body["type"] = 'sensor';
-    body["data"] ={
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport,
-      configurations: item.data.configurations
-    };
-
-    this.dataService.startEquipment(body)
-                     .subscribe(
-                       data => this.objects = data,
-                       error =>  this.errorMessage = <any>error);
-
-    /*(
-     socket.emit("startBoard", JSON.stringify({
-     ip: vm.hostip,
-     port: vm.hostport,
-     email: currentUser.email,
-     sink: vm.listItems[currentNavItem].$id,
-     serialport: ""
-     }));
-     */
-
-  }
-
   addItem() {
     let modal = this.modalCtrl.create(ChooseItemModal);
     modal.present();
@@ -162,7 +95,6 @@ export class SourcePage implements OnInit {
     });
   }
 
-
   updateItem(itemId: string) {
     this.navCtrl.push(CreateKnowledgePage, {
         item: itemId,
@@ -172,6 +104,11 @@ export class SourcePage implements OnInit {
 
   removeItem(event: any, itemId: string){
     this.dataService.removeKnowledge(itemId)
+  }
+
+  showMap() {
+    let modal = this.modalCtrl.create(ShowMapModal,{ items: this.objects, key: this.userKey });
+    modal.present();
   }
 
   itemTapped(event: any, itemId: string) {
@@ -187,8 +124,8 @@ export class SourcePage implements OnInit {
       cssClass: 'action-sheets-basic-page',
       buttons: [
         {
-          text: 'Novo Sensor',
-          icon: !this.platform.is('ios') ? 'arrow-dropright-circle' : null,
+          text: 'Novo',
+          icon: !this.platform.is('ios') ? 'add' : null,
           handler: () => {
             let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', itemType: 'sensor', title: 'Novo Sensor'});
             modal.present();

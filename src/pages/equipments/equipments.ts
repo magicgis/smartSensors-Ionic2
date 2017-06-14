@@ -1,20 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController,NavController, NavParams, Platform, ActionSheetController } from 'ionic-angular';
 import { User } from '@ionic/cloud-angular';
-import { Observable }        from 'rxjs/Observable';
 // Observable operators
 import 'rxjs/add/operator/catch';
 
-//import { AssociationFilterPipe } from '../pipes/association.filter'
-
-import { ChooseItemModal }  from '../choose-item-modal/choose-item-modal';
+import { ShowMapModal }  from '../modals/show-map-modal';
+import { ConnectionConfModal } from '../modals/connection-conf';
+import { ChooseItemModal }  from '../modals/choose-item-modal';
 import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 import { AccessoryDetailsPage } from '../accessory-details/accessory-details';
 import { SourceDetailsPage } from '../source-details/source-details';
 import { HubDetailsPage } from '../hub-details/hub-details';
 
 import { DataService } from '../../providers/apiData.service';
-import {KnowledgeModel} from '../../models/knowledge.model';
+
+import { AssociationModel, EquipmentModel, KnowledgeModel } from '../../models/interfaces';
 
 
 @Component({
@@ -24,14 +24,16 @@ import {KnowledgeModel} from '../../models/knowledge.model';
 export class EquipmentsPage  implements OnInit {
   errorMessage: string;
   selectedItem: string;
-  knowledges: Array<KnowledgeModel> = [];
+  objects: Array<KnowledgeModel<EquipmentModel, AssociationModel>> = [];
 
-  filteredItems: Array<KnowledgeModel> = [];
+  filteredItems: Array<KnowledgeModel<EquipmentModel, AssociationModel>> = [];
   imgdef:string = "assets/icons/img/ionic.png";
 
   equipTitle: string = "equipamentos";
   isAndroid: boolean = false;
   userKey: any;
+
+  connConf: any = {};
 
   constructor(public user:User,
               public platform: Platform,
@@ -43,12 +45,12 @@ export class EquipmentsPage  implements OnInit {
     // If we navigated to this page, we will have an item available as a nav param
     this.isAndroid = platform.is('android');
     this.userKey = navParams.get('key');
-    this.selectedItem = "sink";
+    this.selectedItem = "board";
   }
 
   // Push a search term into the observable stream.
   getItems(selectedItem: string) {
-    this.filteredItems = this.knowledges.filter((v) => {
+    this.filteredItems = this.objects.filter((v) => {
       if (v.type.toLowerCase().indexOf(this.selectedItem.toLowerCase()) > -1) return true;
         return false;
     })
@@ -57,73 +59,52 @@ export class EquipmentsPage  implements OnInit {
   ngOnInit() { this.getEquipments(); }
 
   getEquipments() {
-
-    /*this.objects = this.searchTerms
-        .debounceTime(300)        // wait 300ms after each keystroke before considering the term
-        .distinctUntilChanged()   // ignore if next search term is same as previous
-        .switchMap(term => term   // switch to new observable each time the term changes
-          // return the http search observable
-          ? this.dataService.getData(["association", "own" , this.userKey])
-          // or the observable of empty heroes if there was no search term
-          : Observable.of<any[]>([]))
-        .catch(error => {
-          // TODO: add real error handling
-          console.log(error);
-          return Observable.of<any[]>([]);
-        });*/
-    this.dataService.getData(["ownedBy", this.userKey])
+    this.dataService.getData<EquipmentModel>(["ownedBy", this.userKey],null)
                      .subscribe(
-                       data => this.knowledges = data,
+                       data => this.objects = data,
                        error =>  this.errorMessage = <any>error);
   }
 
-  startClick(event: any, itemIndex: number){
-    /*
-    console.log(user);
-    console.log($scope.pageTitle);
-    $scope.boardModal.show();
-    $scope.configurations = {
-      hostip: "192.168.0.100",
-      hostport: 8001,
-      email: user.email,
-      object: object,
-      serialport: ""
-    };
-    */
+  connectItem(event: any, item: KnowledgeModel<EquipmentModel, AssociationModel>){
+    let modal = this.modalCtrl.create(ConnectionConfModal, {parameter: item.data});
+    modal.present();
+
+    modal.onWillDismiss((data: any) => {
+      if (data) {
+        this.connConf = data.connConf;
+        console.log('MODAL DATA', this.connConf);
+
+        /*this.serial.requestPermission().then(() => {
+          this.serial.open({
+            baudRate: this.connConf.baudRate
+
+          }).then(() => {
+            console.log('Serial connection opened');
+          });
+        }).catch((error: any) => console.log(error));*/
+      }
+    });
   }
-  startItem(event: any, item: any){
-    var configurations = {
-      hostip: "",
-      hostport: "",
-      email: "",
-      sink: "",
-      serialport: "",
-    };
-    var body = {};
 
-    body["equipmentId"] = item._id;
-    body["action"] = 'start';
-    body["type"] = this.selectedItem;
-    body["data"] ={
-      ip: configurations.hostip,
-      port: configurations.hostport,
-      email: configurations.email,
-      sink: configurations.sink,
-      serialport: configurations.serialport,
-      configurations: item.data.configurations
+  toggleItemStatus(item: any){
+    var body = {
+      "boardKeys": [
+        {"boardId": item}
+      ]
     };
 
-    this.dataService.startEquipment(body)
-                     .subscribe(
-                       data => console.log(data),//this.objects = data,
-                       error =>  this.errorMessage = <any>error);
+    this.dataService.toggleEquipmentStatus(body, !this.objects[item].data.connected)
+                     .subscribe( (data) => {
+                       console.log ( data )
+                       this.objects[item].data.connected = data.status;
+                     },error =>  this.errorMessage = <any>error);
 
     /*(
      socket.emit("startBoard", JSON.stringify({
      ip: vm.hostip,
      port: vm.hostport,
      email: currentUser.email,
-     sink: vm.listItems[currentNavItem].$id,
+     board: vm.listItems[currentNavItem].$id,
      serialport: ""
      }));
      */
@@ -158,7 +139,7 @@ export class EquipmentsPage  implements OnInit {
       ip: configurations.hostip,
       port: configurations.hostport,
       email: configurations.email,
-      sink: configurations.sink,
+      board: configurations.board,
       serialport: configurations.serialport
     }, cbStartBoardSuccess, cbStartBoardError);
 
@@ -171,6 +152,11 @@ export class EquipmentsPage  implements OnInit {
 
   editItem(event, item){
 
+  }
+
+  showMap() {
+    let modal = this.modalCtrl.create(ShowMapModal,{ items: this.objects, key: this.userKey });
+    modal.present();
   }
 
   itemTapped(event, item) {
@@ -193,8 +179,8 @@ export class EquipmentsPage  implements OnInit {
       cssClass: 'action-sheets-basic-page',
       buttons: [
         {
-          text: 'Novo Equipamento',
-          icon: !this.platform.is('ios') ? 'arrow-dropright-circle' : null,
+          text: 'Novo',
+          icon: !this.platform.is('ios') ? 'add' : null,
           handler: () => {
             let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', title: 'Novo Equipamento'});
             modal.present();

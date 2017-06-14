@@ -1,0 +1,66 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons start>
+      <button ion-button (click)="dismiss()">
+        <span ion-text color="primary" showWhen="ios">Cancel</span>
+        <ion-icon name="md-close" showWhen="android, windows"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title>
+      {{pageTitle}}
+    </ion-title>
+    <ion-buttons end>
+      <button ion-button (click)="save()">
+        <span ion-text color="primary" showWhen="ios">Salvar</span>
+        <ion-icon name="md-create" showWhen="android, windows"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-list>
+    <ion-item *ngIf="type === 'rule'">
+      <ion-label color="primary">Categoria</ion-label>
+      <ion-select [(ngModel)]="category" >
+        <ion-option *ngFor="let item of categories" [value]="item.value">{{item.display}}</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item *ngIf="type === 'rule'">
+      <ion-label color="primary">Sinal</ion-label>
+      <ion-select [(ngModel)]="operator">
+        <ion-option *ngFor="let item of signs" [value]="item.value">{{item.display}}</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item  *ngIf="type === 'action'">
+      <ion-label color="primary">Categoria</ion-label>
+      <ion-select [(ngModel)]="category">
+        <ion-option *ngFor="let item of actions" [value]="item.value">{{item.display}}</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item  *ngIf="type === 'action'">
+      <ion-label color="primary">Atributo</ion-label>
+      <ion-select [(ngModel)]="attribute">
+        <ion-option value=""></ion-option>
+        <ion-option value="updateValue">updateValue</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-label color="primary">Valor</ion-label>
+      <ion-input [(ngModel)]="value"></ion-input>
+    </ion-item>
+    <ion-item *ngIf="hasConnector">
+      <ion-label color="primary">Conector</ion-label>
+      <ion-select [(ngModel)]="connector">
+        <ion-option value=""></ion-option>
+        <ion-option *ngFor="let item of connectors" [value]="item.label">{{item.name}}</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item *ngIf="!hasConnector">
+      <ion-label color="primary">Conector</ion-label>
+      <ion-checkbox [(ngModel)]="connector" value="NOT">NOT</ion-checkbox>
+    </ion-item>
+  </ion-list>
+  <div padding>
+    <button ion-button color="assertive" class="ink" full (click)="doSave()">Salvar</button>
+  </div>
+</ion-content>

@@ -1,18 +1,23 @@
 import { Component } from '@angular/core';
-import { ModalController, NavController, NavParams } from 'ionic-angular';
+import { ActionSheetController, ModalController, NavController, NavParams, Platform } from 'ionic-angular';
 
 import { DataService } from '../../providers/apiData.service';
 import { User } from '@ionic/cloud-angular';
-import { ModalContentPage }  from '../modals/attribute-item';
+import { ShowMapModal }  from '../modals/show-map-modal';
 
 import { AccessoryDetailsPage } from '../accessory-details/accessory-details';
 import { HubDetailsPage } from '../hub-details/hub-details';
 import { ProfilePage } from '../profile/profile';
 import { CreateKnowledgePage } from '../create-knowledge/create-knowledge';
 
-import { KnowledgeModel } from '../../models/knowledge.model';
-import { DataInterface } from '../../models/data.interface';
-import { AttributeModel } from '../../models/attribute.model';
+
+import {
+  AssociationModel, AttributeModel, EquipmentModel, KnowledgeModel,
+  RelationModel
+} from '../../models/interfaces';
+import { ChooseItemModal } from '../modals/choose-item-modal';
+import { TopicDesignerPage } from '../topic-designer/topic-designer';
+import { RelationModalPage } from '../modals/relation-item-modal';
 
 @Component({
   selector: 'page-source-details',
@@ -28,12 +33,12 @@ export class SourceDetailsPage {
   selectedItem: any;
   userKey: any;
 
-  object: KnowledgeModel;
+  object: KnowledgeModel<EquipmentModel, AssociationModel>;
   configurations: Array<AttributeModel> = [];
 
-  data: DataInterface;
+  data: EquipmentModel;
   info: Array<AttributeModel> = [];
-  knowledges: Array<KnowledgeModel> = [];
+  knowledges: Array<KnowledgeModel<EquipmentModel, AssociationModel>> = [];
   changed: boolean[];
 
   constantsWindows: Object = {
@@ -45,12 +50,14 @@ export class SourceDetailsPage {
     update: "Salvar"
   };
 
-  shouldAnimate: boolean = true;
+  shouldAnimate: boolean = false;
 
   constructor(public user:User,
               public navCtrl: NavController,
               public navParams: NavParams,
+              public platform: Platform,
               public modalCtrl: ModalController,
+              public actionsheetCtrl: ActionSheetController,
               private dataService:DataService) {
     // If we navigated to this page, we will have an item available as a nav param
     this.selectedItem = navParams.get('item');
@@ -64,18 +71,18 @@ export class SourceDetailsPage {
   }
 
   selectObject() {
-    this.dataService.getOne([ this.selectedItem])
-                     .subscribe(result => {
+    this.dataService.getOne<EquipmentModel>([ this.selectedItem])
+                     .subscribe((result:KnowledgeModel<EquipmentModel, AssociationModel>) => {
                        this.pageTitle  = result.data.name;
                        this.info = result.data.info;
                        this.configurations = result.data.configurations;
                        this.data = result.data;
-                       this.object = new KnowledgeModel(result);
+                       this.object = result;
                      },error =>  this.errorMessage = <any>error);
   }
 
   selectAssociations() {
-    this.dataService.getData(["connectedTo", this.selectedItem])
+    this.dataService.getData(["connectedTo", this.selectedItem],null)
                   .subscribe((objects: any[]) => {
       this.knowledges = objects;
     });
@@ -91,21 +98,6 @@ export class SourceDetailsPage {
       });*/
   }
 
-  updateItem() {
-    this.navCtrl.push(CreateKnowledgePage, {
-        item: this.selectedItem,
-        key: this.userKey
-    });
-  }
-
-  editItem(event: any, itemIndex: number){
-  }
-  enableItem(event: any, itemIndex: number){
-  }
-
-  removeItem(event: any, itemId){
-    this.dataService.removeKnowledge(itemId);
-  }
 
   toggleUpdateAttr(evt, ref, item){
     if(evt.checked !== this.data[ref][item])
@@ -113,12 +105,16 @@ export class SourceDetailsPage {
       //this.changed[ref + item]=! this.changed[ref + item];
   }
 
-  addAssociation(){
+  addAssociation(itemId: string, associationType: string, relation: RelationModel){
+    this.dataService.addAssociation(itemId, associationType, relation);
+  }
 
+  removeAssociation(itemId: string, associationType: string, relid: string){
+    this.dataService.removeAssociation(itemId, associationType , relid);
   }
 
   openModal(type, ref) {
-    let modal = this.modalCtrl.create(ModalContentPage);
+    let modal = this.modalCtrl.create(RelationModalPage);
     modal.present();
     modal.onWillDismiss((data: any) => {
       if (data) {
@@ -150,11 +146,17 @@ export class SourceDetailsPage {
         });
   }
 
+  showMap() {
+    let modal = this.modalCtrl.create(ShowMapModal,{ items: [].push(this.object), key: this.userKey });
+    modal.present();
+  }
+
   itemTapped(event, item) {
     var nextPage:any = null;
     if (item.type === "sensor") nextPage = SourceDetailsPage;
     else if (item.type === "actuator") nextPage = AccessoryDetailsPage;
-    else if (item.type === "sink") nextPage = HubDetailsPage;
+    else if (item.type === "board") nextPage = HubDetailsPage;
+    else if (item.type === "topic") nextPage = TopicDesignerPage;
     else nextPage = ProfilePage;
 
     this.navCtrl.push(nextPage, {
@@ -162,4 +164,77 @@ export class SourceDetailsPage {
         key: this.userKey
     });
   }
+
+  updateItem() {
+    this.navCtrl.push(CreateKnowledgePage, {
+      item: this.selectedItem,
+      key: this.userKey
+    });
+  }
+
+  editItem(event: any, itemIndex: number){
+  }
+  enableItem(event: any, itemIndex: number){
+  }
+
+  removeItem(){
+    this.dataService.removeKnowledge(this.selectedItem);
+  }
+
+  createItem(){
+    let modal = this.modalCtrl.create(ChooseItemModal, {key: this.userKey, listType: 'equipment', itemType: 'sensor', title: 'Novo Sensor'});
+    modal.present();
+    modal.onWillDismiss((data: any) => {
+      if (data) {
+        this.navCtrl.push(CreateKnowledgePage, {
+          template: data.itemTemplate,
+          item: "",
+          key: this.userKey
+        });
+        console.log('MODAL DATA', data);
+      }
+    });
+  }
+
+  openMenu() {
+    let actionSheet = this.actionsheetCtrl.create({
+      title: 'Sensors',
+      cssClass: 'action-sheets-basic-page',
+      buttons: [
+        {
+          text: 'Novo',
+          icon: !this.platform.is('ios') ? 'add' : null,
+          handler: () => {
+            this.createItem();
+          }
+        },
+        {
+          text: 'Editar',
+          icon: !this.platform.is('ios') ? 'create' : null,
+          handler: () => {
+            this.updateItem();
+          }
+        },
+        {
+          text: 'Remover',
+          role: 'destructive',
+          icon: !this.platform.is('ios') ? 'trash' : null,
+          handler: () => {
+            console.log('Delete clicked');
+            this.removeItem();
+          }
+        },
+        {
+          text: 'Voltar',
+          role: 'quit', // will always sort to be on the bottom
+          icon: !this.platform.is('ios') ? 'close' : null,
+          handler: () => {
+            console.log('Sair clicked');
+          }
+        }
+      ]
+    });
+    actionSheet.present();
+  }
+
 }

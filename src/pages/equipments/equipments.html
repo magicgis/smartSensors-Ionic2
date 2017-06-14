@@ -12,7 +12,7 @@
   </ion-navbar>
   <ion-toolbar no-border-top>
     <ion-segment [(ngModel)]="selectedItem">
-        <ion-segment-button value="sink">
+        <ion-segment-button value="board">
         Hubs
       </ion-segment-button>
       <ion-segment-button value="sensor">
@@ -25,6 +25,9 @@
   </ion-toolbar>
 </ion-header>
 <ion-content>
+  <ion-fab top right edge>
+    <button ion-fab mini (click)="showMap()"><ion-icon name="compass"></ion-icon></button>
+  </ion-fab>
 
   <div [ngSwitch]="getItems(selectedItem)">
     <ion-list>
@@ -34,7 +37,7 @@
             <img [src]="(item.data.icon)?item.data.icon:imgdef">
           </ion-avatar>
           <h2>{{item.data.name}}</h2>
-          <h3><em>{{item.data.subtype}}</em></h3>
+          <h3><em>{{item.data.category}}</em></h3>
           <p>{{item.data.label}}</p>
           <ion-icon name="chevron-right" item-right></ion-icon>
         </button>
@@ -42,8 +45,8 @@
           <button ion-button color="primary" (click)="editItem($event, item)">
             Editar
           </button>
-          <button ion-button color="secondary"  (click)="enableItem($event, item._id)">
-            Habilitar
+          <button ion-button color="secondary"  (click)="conectItem($event, item)">
+            Conectar
           </button>
         </ion-item-options>
         <ion-item-options side="left">

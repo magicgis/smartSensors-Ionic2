@@ -1,4 +1,4 @@
-import {Validators, FormBuilder, FormGroup } from '@angular/forms';
+import {FormBuilder, FormGroup } from '@angular/forms';
 export class RelationModel {
   public id: string;
   public sync: number;

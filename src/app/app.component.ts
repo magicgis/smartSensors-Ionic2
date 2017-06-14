@@ -3,19 +3,23 @@ import { Events, AlertController, Nav, Platform } from 'ionic-angular';
 import { LoadingController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
-import { Push, PushObject, PushOptions } from "@ionic-native/push";
-//import { Storage } from '@ionic/storage';
-
 import { DataService } from '../providers/apiData.service';
-
 import { HomePage } from '../pages/home/home';
 import { LoginPage } from '../pages/login/login';
 import { ProfilePage } from '../pages/profile/profile';
 import { EquipmentsPage } from '../pages/equipments/equipments';
 import { AccessoryPage } from '../pages/accessory/accessory';
 import { SourcePage } from '../pages/source/source';
+import { TopicPage } from '../pages/topic/topic';
+import { ChatsPage } from '../pages/chats/chats';
+import { MapsPage } from '../pages/maps/maps';
 import { HubPage } from '../pages/hub/hub';
+import { BarcodePage } from '../pages/barcode/barcode';
 import { User, Auth } from '@ionic/cloud-angular';
+import { GeofenceDetailsPage } from "../pages/geofence/geofence";
+//import { GraphPage } from '../pages/graph/graph';
+//import { Storage } from '@ionic/storage';
+
 
 @Component({
   templateUrl: 'app.html'
@@ -25,60 +29,67 @@ export class MyApp {
 
   rootPage: any = LoginPage;
   userKey: any;
-  userID: any;
   errorMessage: string;
 
   pages: Array<{title: string, component: any}>;
 
+  //private userProfile: Array<Object>;
+
   constructor(public platform: Platform,
-          		private events: Events,
-          		//private storage: Storage,
-              private statusBar: StatusBar,
-          		private splashScreen: SplashScreen,
-              public push: Push,
+              public events: Events,
+              public statusBar: StatusBar,
+              public splashScreen: SplashScreen,
               public dataService:DataService,
               public user:User,
               public auth:Auth,
               public alertCtrl: AlertController,
-              public loadingCtrl:LoadingController) {
+              public loadingCtrl:LoadingController
+  ){
+
     this.initializeApp();
 
     // used for an example of ngFor and navigation
     this.pages = [
-      { title: 'Home', component: HomePage },
-      { title: 'Perfil', component: ProfilePage },
+      { title: 'Novidades', component: HomePage },
+      { title: 'Meus Canais', component: ChatsPage },
+      { title: 'Tópicos', component: TopicPage },
       { title: 'Acessórios', component: AccessoryPage },
       { title: 'Sensores', component: SourcePage },
-      { title: 'Hub', component: HubPage },
-      { title: 'Equipamentos', component: EquipmentsPage }
+      { title: 'Hubs', component: HubPage },
+      { title: 'Equipamentos', component: EquipmentsPage },
+      //{ title: 'Graph', component: GraphPage },
+      { title: 'Mapas', component: MapsPage },
+      { title: 'Geofence', component: GeofenceDetailsPage },
+      { title: 'Barcodes', component: BarcodePage },
+      { title: 'Perfil', component: ProfilePage }
     ];
 
   }
 
   initializeApp() {
     this.platform.ready().then(() => {
+
       this.statusBar.styleDefault();
       this.splashScreen.hide();
-      this.initPushNotification();
-
       if(this.auth.isAuthenticated()) {
+
         let loader = this.loadingCtrl.create({
-          content: "Logging in..."
+          content: "Conectando..."
         });
         loader.present();
         this.dataService.getStaticData(["data", "data.email", this.user.details.email], "owner")
               .then(value => {
-                this.userKey  = value[0].owner, this.userID  = value[0]._id
+                this.userKey  = value[0]._id
                 loader.dismissAll();
-                this.nav.setRoot(HomePage, {"key": this.userID, "id": this.userID})
+                this.nav.setRoot(HomePage, {"key": this.userKey})
               },error =>  this.errorMessage = <any>error);
       }else{
         this.nav.setRoot(LoginPage);
       }
-      // We subscribe to the dismiss observable of the service
 
     });
   }
+
 
   listenToLoginEvents() {
 		this.events.subscribe('user:login', () => {
@@ -91,56 +102,11 @@ export class MyApp {
 		})
 	}
 
-  initPushNotification(){
-    if (!this.platform.is('cordova')) {
-      console.warn("Push notifications not initialized. Cordova is not available - Run in physical device");
-      return;
-    }
-
-    const options: PushOptions = {
-      android: {
-        senderID: "998257253122"
-      },
-      ios: {
-        alert: "true",
-        badge: false,
-        sound: "true"
-      },
-      windows: {}
-    };
-    const pushObject: PushObject = this.push.init(options);
-
-    pushObject.on('registration').subscribe((data: any) => {
-      console.log("device token -> " + data.registrationId);
-      //TODO - send device token to server
-    });
-
-    pushObject.on('notification').subscribe((data: any) => {
-      console.log('message', data.message);
-      //if user using app and push notification comes
-      if (data.additionalData.foreground) {
-        // if application open, show popup
-        let confirmAlert = this.alertCtrl.create({
-          title: 'New Notification',
-          message: data.message,
-          buttons: [{
-            text: 'Ignore',
-            role: 'cancel'
-          }]
-        });
-        confirmAlert.present();
-      } else {
-        console.log("Push notification clicked");
-      }
-    });
-
-    pushObject.on('error').subscribe(error => console.error('Error with Push plugin', error));
-  }
 
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    this.nav.push(page.component, {"key": this.userID, "id": this.userID});
+    this.nav.setRoot(page.component, {"key": this.userKey});
   }
 
 }

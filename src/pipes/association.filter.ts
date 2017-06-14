@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 //import {KnowledgeModel} from '../models/knowledge.model';
-import {DataInterface} from '../models/objectData.model';
+//import {DataInterface} from '../models/objectData.model';
 
 @Pipe({
     name: 'associationfilter',

@@ -1,4 +1,4 @@
-import { AddressModel } from "./address.model";
+import { ConnectionModel } from "./connection.model";
 import { AttributeModel } from "./attribute.model";
 import { FormBuilder, FormArray, FormGroup } from '@angular/forms';
 import { DataInterface } from "./data.interface";
@@ -14,9 +14,9 @@ export class EquipmentModel implements DataInterface{
   label: string;
   description: string;
   name: string;
+  connection: ConnectionModel;
   info: Array<AttributeModel> = [];
   configurations: Array<AttributeModel> = [];
-  geo: AddressModel;
 
   private formGroup: FormGroup;
   private formInfoArray: FormArray;
@@ -61,7 +61,7 @@ export class EquipmentModel implements DataInterface{
         };
     }
 
-    this.geo          = new AddressModel ( input[ "geo" ], fb );
+    this.connection   = new ConnectionModel ( input[ "connection" ], fb );
 
     if (fb) this.formGroup = fb.group({
         updatedValue: [this.updatedValue],
@@ -74,9 +74,9 @@ export class EquipmentModel implements DataInterface{
         image: [this.image],
         icon: [this.icon],
         sync: [this.sync],
+        connection: this.connection.getFormGroup(),
         info: this.formInfoArray,
         configurations: this.formConfigArray,
-        geo: this.geo.getFormGroup()
       });
   }
 
@@ -95,6 +95,7 @@ export class EquipmentModel implements DataInterface{
     if (input.template.info)
       for (let item of input.template.info)
           this[item.name] = item.value;
+
 
     if (input.template.properties)
       for(let item of input.template.properties){

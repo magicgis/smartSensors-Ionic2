@@ -12,8 +12,11 @@
   </ion-navbar>
 </ion-header>
 <ion-content>
+  <ion-fab top right edge>
+    <button ion-fab mini (click)="showMap()"><ion-icon name="compass"></ion-icon></button>
+  </ion-fab>
   <ion-list>
-    <ion-item-sliding [animateItemSliding]="shouldAnimate" *ngFor="let object of objects" #objectItem>
+    <ion-item-sliding [animateItemSliding]="shouldAnimate" *ngFor="let object of objects; let i = index;" #objectItem>
       <button ion-item (click)="itemTapped($event, object._id)">
         <ion-avatar item-left>
           <img [src]="(object.data.icon)?object.data.icon:imgdef">
@@ -27,8 +30,9 @@
         <button ion-button color="secondary" (click)="updateItem($event, object._id)">
           Editar
         </button>
-        <button ion-button color="primary" (click)="startItem($event, object._id)">
-          Iniciar
+        <button *ngIf="object.type === 'board' || object.type === 'topic'" ion-button color="primary" (click)="toggleItemStatus(object._id)">
+          <span *ngIf="!watchID[object._id] || watchID[object._id]?.closed">Iniciar</span>
+          <span *ngIf="watchID[object._id] && !watchID[object._id]?.closed">Parar</span>
         </button>
       </ion-item-options>
       <ion-item-options side="left">

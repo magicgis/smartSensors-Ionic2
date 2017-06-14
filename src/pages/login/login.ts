@@ -2,7 +2,10 @@ import { Component } from '@angular/core';
 import { NavController, AlertController, LoadingController } from 'ionic-angular';
 import { Auth, FacebookAuth, User, UserDetails, IDetailedError } from '@ionic/cloud-angular';
 import { HomePage } from '../home/home';
-import { ProfilePage } from '../profile/profile';
+import { GraphPage } from '../graph/graph';
+
+import { DataService } from '../../providers/apiData.service';
+
 
 @Component({
   selector: 'page-login',
@@ -25,8 +28,8 @@ export class LoginPage {
               public facebookAuth: FacebookAuth,
               public user: User,
               public alertCtrl: AlertController,
-              public loadingCtrl:LoadingController) {
-  }
+              public dataService:DataService,
+              public loadingCtrl:LoadingController) {}
 
   ionViewDidLoad() {
     //console.log('LoginPage Page');
@@ -55,10 +58,12 @@ export class LoginPage {
       });
       loader.present();
 
-      this.auth.login('basic', {'email':this.email, 'password':this.password}).then(() => {
-        console.log('ok i guess?');
-        loader.dismissAll();
+      this.auth.login('basic', {'email':this.email, 'password':this.password}).then((userProfile) => {
+        console.log('Conectado: ', userProfile);
+
         this.navCtrl.setRoot(HomePage);
+        loader.dismissAll();
+
       }, (err) => {
         loader.dismissAll();
         console.log(err.message);
@@ -74,13 +79,19 @@ export class LoginPage {
         });
         alert.present();
       });
-    } else {
-      this.showLogin = true;
-      this.showRegister = false;
-      this.showForgotten = false;
-      this.showVerifyCode = false;
-      this.pageTitle = "Conectar";
     }
+    else {
+      this.showLogin      = true;
+      this.showRegister   = false;
+      this.showForgotten  = false;
+      this.showVerifyCode = false;
+      this.pageTitle      = "Conectar";
+    }
+  }
+
+
+  goGraph(){
+    this.navCtrl.setRoot(GraphPage);
   }
 
   doRegister() {
@@ -215,10 +226,9 @@ export class LoginPage {
   }
 
   doFbLogin(){
-    let nav = this.navCtrl;
 
     let loader = this.loadingCtrl.create({
-      content: "Logging in..."
+      content: "Conectando..."
     });
     loader.present();
 

@@ -1,41 +1,73 @@
+import { ConnectorTypes } from '../references/references';
 
-export interface AddressModel {
-  address: string;
-  lat: number;
-  lng: number;
-  sync: number;
+interface ObjectsDictionary<T>{
+  [index: number]: T;
+  object: T;
 }
 
+export class SyncObjectModel<T>{
+  sync: number = 0;
+  objects: Array<T> = [];
+  items: ObjectsDictionary<T> = <ObjectsDictionary<T>>{};
+
+  constructor(){}
+}
+
+export interface Geofence {
+  id: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  transitionType: number;
+  notification: {
+      text: string
+    };
+}
+
+export interface AddressModel {
+  type : "Point",
+  coordinates : any,
+  text : string,
+  sync: number
+}
+
+export interface ConnectionModel {
+  baudrate: number,
+  port: number,
+  host: string
+}
 export interface AttributeModel {
   attribute: string;
   type: string;
   value:  any;
 }
-
-export interface RelationModel {
-  id: string;
-  sync: number;
-  access: string;
-  publish: boolean;
-  view: boolean;
+export interface ActionModel{
+  type: string;
+  category: string;
+  action:  any;
 }
-
-export interface AssociationModel {
-  abstraction: boolean;
-  parent: string;
-  ownedBy: Array<RelationModel>;
-  connectedTo: Array<RelationModel>;
-  subscriberAt: Array<RelationModel>;
-  likedTo: Array<RelationModel>;
-  commentedAt: Array<RelationModel>;
-  subscribedBy: Array<RelationModel>;
+export interface EvaluationModel {
+  attribute: string;
+  connector: ConnectorTypes;
+  value:  any;
+}
+export interface RuleModel{
+  enabled : boolean;
+  label: string;
+  knowledge: string;
+  type: string;
+  category: string;
+  icon: string;
+  formula: string;
+  result:  any;
+  evaluation: EvaluationModel;
 }
 
 export interface EquipmentModel {
-  conected: boolean;
+  connected: boolean;
   enabled: boolean;
   updatedValue: string;
-  sync: number;
+  sync?: number;
   unit: string;
   icon: string;
   image: string;
@@ -43,9 +75,7 @@ export interface EquipmentModel {
   name: string;
   info: Array<AttributeModel>;
   configurations: Array<AttributeModel>;
-  geo: AddressModel;
 }
-
 export interface ProfileModel {
   displayName: string;
   email: string;
@@ -59,15 +89,91 @@ export interface ProfileModel {
   name: string;
   configurations: Array<any>;
 }
+export interface MessageModel {
+  enabled: boolean;
+  message: string;
 
-export interface KnowledgeModel {
-  _id: string;
-  root: string;
-  access: string;
-  relations: AssociationModel;
-  data: EquipmentModel;
-  type: string;
-  subtype: string;
-  version: string;
-  sync: number;
+  profile: string;
+  likes: number;
+  dislikes: number;
+  comments: number;
+}
+export interface TopicModel {
+  enabled: boolean;
+  updatedValue: string;
+  label: string;
+  name: string;
+  description: string;
+  icon: string;
+  image: string;
+  formula: string;
+  sync?: number;
+  actionContainer: Array<ActionModel>;
+  ruleContainer: Array<RuleModel>;
+  info: Array<AttributeModel>;
+
+}
+export interface ChannelModel {
+  connected: boolean;
+  enabled: boolean;
+  updatedValue: string;
+  sync?: number;
+  unit: string;
+  icon: string;
+  image: string;
+  label: string;
+  name: string;
+  info: Array<AttributeModel>;
+
+}
+export interface RelationModel {
+  id: string;
+  sync?: number;
+  access?: string;
+  publish?: boolean;
+  view?: boolean;
+}
+export interface AssociationModel {
+  abstraction: boolean;
+  parent: string;
+  ownedBy: Array<RelationModel>;
+  connectedTo: Array<RelationModel>;
+  subscriberAt: Array<RelationModel>;
+  likedTo: Array<RelationModel>;
+  commentedAt: Array<RelationModel>;
+  subscribedBy: Array<RelationModel>;
+}
+export interface KnowledgeModel<DT, RL>{
+  _id: string,
+  root: string,
+  access: string,
+  relations: RL,
+  data: DT,
+  type: string,
+  category: string,
+  version: string,
+  sync: number,
+  location: AddressModel,
+  connection: ConnectionModel
+};
+export interface KnowledgeConstructor<DT, RL>{
+  new (input: KnowledgeModel<DT, RL>): KnowledgeModel<DT, RL>;
+}
+interface KnowledgeInterface {
+}
+
+export function createKnowledge<DT, RL>(ctor: KnowledgeConstructor<DT, RL>, input: KnowledgeModel<DT, RL>): KnowledgeModel<DT, RL> {
+  return new ctor(input);
+}
+export class KnowledgeChannelModel implements KnowledgeInterface{
+  constructor(input: KnowledgeModel<ChannelModel, AssociationModel>) { }
+}
+export class KnowledgeMessageModel implements KnowledgeInterface {
+  constructor(input: KnowledgeModel<MessageModel, AssociationModel>) { }
+}
+export class KnowledgeProfileModel implements KnowledgeInterface {
+  constructor(input: KnowledgeModel<ProfileModel, AssociationModel>) { }
+}
+export class KnowledgeEquipmentModel implements KnowledgeInterface {
+  constructor(input: KnowledgeModel<EquipmentModel, AssociationModel>) { }
 }

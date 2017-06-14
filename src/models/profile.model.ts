@@ -1,8 +1,5 @@
-import { AddressModel } from "./address.model";
-import { AttributeModel } from "./attribute.model";
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DataInterface } from "./data.interface";
-import { ProfileInterface } from "./profile.interface";
 
 export class ProfileModel implements DataInterface{
   displayName: string;
